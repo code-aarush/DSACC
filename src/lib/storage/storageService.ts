@@ -29,7 +29,7 @@ export function createDefaultSettings(): ApplicationSettings {
     examTitle: 'DSA End-Semester Examination',
     targetDailyStudyMinutes: 180,
     theme: 'light',
-    spacedRepetitionIntervalsDays: [1, 3, 7, 14],
+    spacedRepetitionIntervalsDays: [1, 3, 7, 14, 30],
     initialisedAt: getCurrentIsoTimestamp(),
     academicDataSeededAt: getCurrentIsoTimestamp(),
   }
@@ -51,6 +51,7 @@ export function createInitialApplicationState(): VersionedApplicationState {
       tasks: [],
       brainDumpNotes: [],
       studySessions: [],
+      revisions: [],
       settings: createDefaultSettings(),
     },
   }
@@ -127,6 +128,11 @@ export function mergeSeedDataIntoExistingState(
       adts: mergedAdts,
       algorithms: mergedAlgorithms,
       settings: updatedSettings,
+      cpProblems: existingData.cpProblems ?? [],
+      tasks: existingData.tasks ?? [],
+      brainDumpNotes: existingData.brainDumpNotes ?? [],
+      studySessions: existingData.studySessions ?? [],
+      revisions: existingData.revisions ?? [],
     },
   }
 

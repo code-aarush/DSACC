@@ -349,10 +349,41 @@ export interface ApplicationSettings {
 }
 
 // ============================================================================
+// Spaced Revision & Analytics Domain Models
+// ============================================================================
+
+export type RevisionEntityType = 'TOPIC' | 'ADT' | 'ALGORITHM' | 'CP_PROBLEM'
+
+export type ReviewOutcome = 'FAILED' | 'WEAK' | 'SATISFACTORY' | 'STRONG'
+
+export interface RevisionLogEntry {
+  id: EntityId
+  reviewedAt: string
+  confidenceBefore?: TopicConfidenceLevel
+  confidenceAfter: TopicConfidenceLevel
+  outcome: ReviewOutcome
+  intervalDays: number
+  notes?: string
+}
+
+export interface RevisionRecord extends AuditableEntity {
+  entityType: RevisionEntityType
+  entityId: EntityId
+  /** Snapshot title for graceful display if linked entity is removed */
+  entityTitleSnapshot?: string
+  currentIntervalDays: number
+  lastReviewedDate?: string
+  nextReviewDate: string
+  revisionStatus: RevisionStatus
+  reviewHistory: RevisionLogEntry[]
+  notes?: string
+}
+
+// ============================================================================
 // Versioned Application State
 // ============================================================================
 
-export const CURRENT_SCHEMA_VERSION = 1
+export const CURRENT_SCHEMA_VERSION = 2
 
 export interface ApplicationDataPayload {
   topics: SyllabusTopic[]
@@ -362,6 +393,7 @@ export interface ApplicationDataPayload {
   tasks: Task[]
   brainDumpNotes: BrainDumpNote[]
   studySessions: StudySession[]
+  revisions: RevisionRecord[]
   settings: ApplicationSettings
 }
 

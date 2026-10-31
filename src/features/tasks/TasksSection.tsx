@@ -683,10 +683,9 @@ export const TasksSection: React.FC = () => {
                         {task.isDailyFocus && (
                           <span className="badge badge-accent" title="Daily Focus">Focus</span>
                         )}
-                        <span className={`badge ${
-                          task.priority === 'CRITICAL' ? 'badge-warning' :
-                          task.priority === 'HIGH' ? 'badge-warning' : 'badge-neutral'
-                        }`}>
+                        <span className={`badge ${task.priority === 'CRITICAL' ? 'badge-warning' :
+                            task.priority === 'HIGH' ? 'badge-warning' : 'badge-neutral'
+                          }`}>
                           {PRIORITY_LABELS[task.priority]}
                         </span>
                         <span className="badge badge-neutral">

@@ -486,10 +486,9 @@ export const CPPracticeSection: React.FC = () => {
                   <div className="record-title-area">
                     <span className="record-title">{problem.title}</span>
                     <span className="badge badge-neutral">{PLATFORM_LABELS[problem.platform]}</span>
-                    <span className={`badge ${
-                      problem.difficulty === 'HARD' ? 'badge-warning' :
-                      problem.difficulty === 'MEDIUM' ? 'badge-neutral' : 'badge-neutral'
-                    }`}>
+                    <span className={`badge ${problem.difficulty === 'HARD' ? 'badge-warning' :
+                        problem.difficulty === 'MEDIUM' ? 'badge-neutral' : 'badge-neutral'
+                      }`}>
                       {DIFFICULTY_LABELS[problem.difficulty]}
                     </span>
                     <span className="badge badge-neutral">

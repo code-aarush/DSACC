@@ -1,6 +1,5 @@
 import React from 'react'
 import { useApp } from '../../context/useApp'
-import { SECTIONS } from '../../context/navigationSections'
 import { AppHeader } from './AppHeader'
 import { AppSidebar } from './AppSidebar'
 import { MobileNav } from './MobileNav'
@@ -11,12 +10,10 @@ import { AlgorithmSection } from '../../features/algorithm-library/AlgorithmSect
 import { TasksSection } from '../../features/tasks/TasksSection'
 import { CPPracticeSection } from '../../features/cp-practice/CPPracticeSection'
 import { BrainDumpSection } from '../../features/brain-dump/BrainDumpSection'
-import { PlaceholderSection } from '../common/PlaceholderSection'
+import { RevisionAnalyticsSection } from '../../features/revision-analytics/RevisionAnalyticsSection'
 
 export const AppShell: React.FC = () => {
   const { activeSection, storageError, isInitialized } = useApp()
-
-  const currentSectionMeta = SECTIONS.find(s => s.id === activeSection) || SECTIONS[0]
 
   const renderContent = () => {
     switch (activeSection) {
@@ -42,18 +39,7 @@ export const AppShell: React.FC = () => {
         return <BrainDumpSection />
 
       case 'analytics':
-        return (
-          <PlaceholderSection
-            section={currentSectionMeta}
-            description="Actionable revision intelligence, weak-topic identification based on confidence ratings, and data recovery."
-            deliverables={[
-              'Required syllabus coverage by unit excluding optional topics',
-              'Low-confidence weak topic identification (1-5 scale)',
-              'JSON export and validated restore workflows',
-              'Merge and replace recovery modes with pre-restore safety backups',
-            ]}
-          />
-        )
+        return <RevisionAnalyticsSection />
 
       default:
         return <OverviewSection />
@@ -63,7 +49,7 @@ export const AppShell: React.FC = () => {
   return (
     <div className="app-container">
       <AppHeader />
-      
+
       {storageError && (
         <div className="alert-banner error" role="alert" style={{ margin: 'var(--space-2) var(--space-4) 0' }}>
           <strong>Storage Notice:</strong> {storageError.message}

@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react'
 import { useApp } from '../../context/useApp'
-import { calculateExamCountdown, formatDateHuman } from '../../lib/date/dateUtils'
+import { calculateExamCountdown, formatDateHuman, isTaskOverdue, isTaskDueToday } from '../../lib/date/dateUtils'
 import {
   calculateSyllabusProgress,
   calculateADTProgress,
@@ -14,6 +14,7 @@ import {
   getBrainDumpStats,
 } from '../../lib/progress/taskAndCpCalculators'
 import { getCurrentIsoTimestamp } from '../../lib/date/dateUtils'
+import { calculateRevisionAnalytics, identifyWeakAreas } from '../../lib/revision/weakAreaAnalytics'
 
 export const OverviewSection: React.FC = () => {
   const { appState, saveStatus, setActiveSection, updateAppState } = useApp()
@@ -27,13 +28,14 @@ export const OverviewSection: React.FC = () => {
   const tasks = useMemo(() => appState?.data.tasks || [], [appState?.data.tasks])
   const cpProblems = useMemo(() => appState?.data.cpProblems || [], [appState?.data.cpProblems])
   const notes = useMemo(() => appState?.data.brainDumpNotes || [], [appState?.data.brainDumpNotes])
+  const revisions = useMemo(() => appState?.data.revisions || [], [appState?.data.revisions])
 
   // Academic dataset metrics
   const syllabusProgress = useMemo(() => calculateSyllabusProgress(topics), [topics])
   const adtProgress = useMemo(() => calculateADTProgress(adts), [adts])
   const algoProgress = useMemo(() => calculateAlgorithmProgress(algorithms), [algorithms])
 
-  // Milestone 3 metrics
+  // Task & CP metrics
   const taskStats = useMemo(() => getTaskStats(tasks), [tasks])
   const nextTask = useMemo(() => getNextActionableTask(tasks), [tasks])
   const cpStats = useMemo(() => calculateCPProgress(cpProblems), [cpProblems])
@@ -43,6 +45,21 @@ export const OverviewSection: React.FC = () => {
     () => notes.filter(n => n.type === 'DOUBT' && !n.isResolved).slice(0, 5),
     [notes]
   )
+
+  // Revision & Weak-Area intelligence
+  const revisionAnalytics = useMemo(
+    () => calculateRevisionAnalytics(revisions, topics),
+    [revisions, topics]
+  )
+  const weakAreas = useMemo(
+    () => identifyWeakAreas(topics, adts, algorithms, cpProblems, notes, revisions),
+    [topics, adts, algorithms, cpProblems, notes, revisions]
+  )
+
+  const nextRevision = useMemo(() => {
+    if (revisions.length === 0) return null
+    return [...revisions].sort((a, b) => a.nextReviewDate.localeCompare(b.nextReviewDate))[0]
+  }, [revisions])
 
   // 1-click complete next actionable task
   const handleCompleteNextTask = async (taskId: string) => {
@@ -71,109 +88,186 @@ export const OverviewSection: React.FC = () => {
           </div>
           <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center' }}>
             <span className="badge badge-neutral">Storage: {saveStatus}</span>
-            <span className="badge badge-accent">Milestone 3: Daily Workflows</span>
+            <span className="badge badge-accent">Milestone 4: Revision Intelligence</span>
           </div>
         </div>
       </div>
 
-      {/* Overdue Alert Banner if any overdue tasks */}
-      {taskStats.overdue > 0 && (
+      {/* Overdue Alert Banner if any overdue tasks or revisions */}
+      {(taskStats.overdue > 0 || revisionAnalytics.overdue > 0) && (
         <div className="alert-banner warning" role="alert" style={{ marginBottom: 'var(--space-4)' }}>
-          <strong>Attention:</strong> You have {taskStats.overdue} overdue {taskStats.overdue === 1 ? 'task' : 'tasks'}.
-          <button
-            type="button"
-            className="btn btn-secondary btn-sm"
-            style={{ marginLeft: 'var(--space-3)' }}
-            onClick={() => setActiveSection('tasks')}
-          >
-            Review Overdue Tasks &rarr;
-          </button>
+          <div>
+            <strong>Attention:</strong>{' '}
+            {taskStats.overdue > 0 && <span>You have {taskStats.overdue} overdue task{taskStats.overdue > 1 ? 's' : ''}. </span>}
+            {revisionAnalytics.overdue > 0 && <span>You have {revisionAnalytics.overdue} overdue spaced revision{revisionAnalytics.overdue > 1 ? 's' : ''}.</span>}
+          </div>
+          <div style={{ display: 'flex', gap: 'var(--space-2)', marginLeft: 'auto' }}>
+            {taskStats.overdue > 0 && (
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => setActiveSection('tasks')}
+              >
+                Review Tasks &rarr;
+              </button>
+            )}
+            {revisionAnalytics.overdue > 0 && (
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => setActiveSection('analytics')}
+              >
+                Review Revisions &rarr;
+              </button>
+            )}
+          </div>
         </div>
       )}
 
-      {/* Next Actionable Task Hero Card */}
-      <div className="card" style={{ marginBottom: 'var(--space-5)', borderLeft: '4px solid var(--color-accent)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
-          <div>
-            <span className="badge badge-accent" style={{ marginBottom: 'var(--space-2)' }}>
-              Next Actionable Step
-            </span>
-            {nextTask ? (
-              <>
-                <h3 className="card-title" style={{ fontSize: 'var(--font-size-lg)', marginTop: '4px' }}>
-                  {nextTask.title}
-                </h3>
-                <p className="card-description">
-                  {nextTask.description || 'Focus on completing this prioritized study item.'}
-                </p>
-                <div style={{ display: 'flex', gap: 'var(--space-2)', marginTop: 'var(--space-2)', flexWrap: 'wrap' }}>
-                  <span className="badge badge-neutral">Category: {nextTask.category}</span>
-                  <span className="badge badge-neutral">Priority: {nextTask.priority}</span>
-                  {nextTask.dueDate && (
-                    <span className="badge badge-neutral">Due: {formatDateHuman(nextTask.dueDate)}</span>
-                  )}
-                  {nextTask.estimatedDurationMinutes ? (
-                    <span className="badge badge-neutral">Est: {nextTask.estimatedDurationMinutes}m</span>
-                  ) : null}
-                </div>
-              </>
-            ) : (
-              <>
-                <h3 className="card-title" style={{ fontSize: 'var(--font-size-lg)', marginTop: '4px' }}>
-                  All scheduled tasks are completed!
-                </h3>
-                <p className="card-description">
-                  Add a new task or study goal to your plan to keep your momentum going.
-                </p>
-              </>
-            )}
-          </div>
+      {/* Next Actionable Task & Next Revision Grid */}
+      <div className="grid-2" style={{ marginBottom: 'var(--space-5)' }}>
+        {/* Next Actionable Task Hero Card */}
+        <div className="card" style={{ borderLeft: '4px solid var(--color-accent)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
+            <div>
+              <span className="badge badge-accent" style={{ marginBottom: 'var(--space-2)' }}>
+                Next Study Task
+              </span>
+              {nextTask ? (
+                <>
+                  <h3 className="card-title" style={{ fontSize: 'var(--font-size-base)', marginTop: '4px' }}>
+                    {nextTask.title}
+                  </h3>
+                  <p className="card-description" style={{ fontSize: 'var(--font-size-xs)' }}>
+                    {nextTask.description || 'Focus on completing this prioritized study item.'}
+                  </p>
+                  <div style={{ display: 'flex', gap: 'var(--space-2)', marginTop: 'var(--space-2)', flexWrap: 'wrap' }}>
+                    <span className="badge badge-neutral">Category: {nextTask.category}</span>
+                    <span className="badge badge-neutral">Priority: {nextTask.priority}</span>
+                    {nextTask.dueDate && (
+                      <span className="badge badge-neutral">Due: {formatDateHuman(nextTask.dueDate)}</span>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h3 className="card-title" style={{ fontSize: 'var(--font-size-base)', marginTop: '4px' }}>
+                    All scheduled tasks are completed!
+                  </h3>
+                  <p className="card-description" style={{ fontSize: 'var(--font-size-xs)' }}>
+                    Add a new task or study goal to your plan to keep your momentum going.
+                  </p>
+                </>
+              )}
+            </div>
 
-          <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
-            {nextTask && (
+            <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+              {nextTask && (
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm"
+                  onClick={() => handleCompleteNextTask(nextTask.id)}
+                >
+                  ✓ Mark Done
+                </button>
+              )}
               <button
                 type="button"
-                className="btn btn-primary"
-                onClick={() => handleCompleteNextTask(nextTask.id)}
+                className="btn btn-secondary btn-sm"
+                onClick={() => setActiveSection('tasks')}
               >
-                ✓ Mark Completed
+                Study Plan &rarr;
               </button>
-            )}
+            </div>
+          </div>
+        </div>
+
+        {/* Prioritized Spaced Revision Card */}
+        <div className="card" style={{ borderLeft: '4px solid var(--color-accent-text)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
+            <div>
+              <span className="badge badge-accent" style={{ marginBottom: 'var(--space-2)' }}>
+                Prioritized Spaced Revision
+              </span>
+              {nextRevision ? (
+                <>
+                  <h3 className="card-title" style={{ fontSize: 'var(--font-size-base)', marginTop: '4px' }}>
+                    {nextRevision.entityTitleSnapshot || nextRevision.entityId}
+                  </h3>
+                  <p className="card-description" style={{ fontSize: 'var(--font-size-xs)' }}>
+                    Spaced repetition interval: <strong>{nextRevision.currentIntervalDays}d</strong> &bull; Target:{' '}
+                    <strong>{formatDateHuman(nextRevision.nextReviewDate)}</strong>
+                  </p>
+                  <div style={{ display: 'flex', gap: 'var(--space-2)', marginTop: 'var(--space-2)', flexWrap: 'wrap' }}>
+                    <span className="badge badge-neutral">Type: {nextRevision.entityType}</span>
+                    <span
+                      className="badge badge-neutral"
+                      style={isTaskOverdue(nextRevision.nextReviewDate) ? { color: 'var(--color-danger-text)' } : isTaskDueToday(nextRevision.nextReviewDate) ? { color: 'var(--color-accent)' } : {}}
+                    >
+                      {isTaskOverdue(nextRevision.nextReviewDate) ? 'Overdue' : isTaskDueToday(nextRevision.nextReviewDate) ? 'Due Today' : 'Upcoming'}
+                    </span>
+                    <span className="badge badge-neutral">{nextRevision.reviewHistory.length} past reviews</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h3 className="card-title" style={{ fontSize: 'var(--font-size-base)', marginTop: '4px' }}>
+                    No Spaced Revisions Scheduled
+                  </h3>
+                  <p className="card-description" style={{ fontSize: 'var(--font-size-xs)' }}>
+                    Schedule syllabus topics or ADTs for active recall in the Revision Planner.
+                  </p>
+                </>
+              )}
+            </div>
+
             <button
               type="button"
-              className="btn btn-secondary"
-              onClick={() => setActiveSection('tasks')}
+              className="btn btn-secondary btn-sm"
+              onClick={() => setActiveSection('analytics')}
             >
-              Open Study Plan &rarr;
+              Planner &rarr;
             </button>
           </div>
         </div>
       </div>
 
       {/* Key Metrics Grid */}
-      <div className="grid-3" style={{ marginBottom: 'var(--space-5)' }}>
-        <div className="card">
-          <div className="badge badge-neutral" style={{ marginBottom: 'var(--space-2)' }}>Exam Timeline</div>
-          <h4 className="card-title">{countdown.formattedLabel}</h4>
-          <p className="card-description">
-            Target: <strong>{formatDateHuman(examDate)}</strong>. System clock aware boundaries without UTC day shifts.
-          </p>
+      <div className="grid-2" style={{ marginBottom: 'var(--space-5)' }}>
+        <div className="grid-2" style={{ gap: 'var(--space-4)' }}>
+          <div className="card">
+            <div className="badge badge-neutral" style={{ marginBottom: 'var(--space-2)' }}>Exam Timeline</div>
+            <h4 className="card-title">{countdown.formattedLabel}</h4>
+            <p className="card-description">
+              Target: <strong>{formatDateHuman(examDate)}</strong>. System clock aware boundaries without UTC day shifts.
+            </p>
+          </div>
+
+          <div className="card">
+            <div className="badge badge-neutral" style={{ marginBottom: 'var(--space-2)' }}>Study Plan Status</div>
+            <h4 className="card-title">{taskStats.dueToday} Today &bull; {taskStats.dailyFocus} Focus</h4>
+            <p className="card-description">
+              {taskStats.done} completed of {taskStats.total} tasks. {taskStats.upcoming} upcoming.
+            </p>
+          </div>
         </div>
 
-        <div className="card">
-          <div className="badge badge-neutral" style={{ marginBottom: 'var(--space-2)' }}>Study Plan Status</div>
-          <h4 className="card-title">{taskStats.dueToday} Today &bull; {taskStats.dailyFocus} Focus</h4>
-          <p className="card-description">
-            {taskStats.done} completed of {taskStats.total} tasks. {taskStats.upcoming} upcoming.
-          </p>
-        </div>
+        <div className="grid-2" style={{ gap: 'var(--space-4)' }}>
+          <div className="card">
+            <div className="badge badge-neutral" style={{ marginBottom: 'var(--space-2)' }}>Spaced Repetition</div>
+            <h4 className="card-title">{revisionAnalytics.dueToday} Due Today &bull; {revisionAnalytics.overdue} Overdue</h4>
+            <p className="card-description">
+              {revisionAnalytics.totalScheduled} scheduled &bull; {revisionAnalytics.totalCompletedReviews} reviews ({revisionAnalytics.onTimeCompletionRate}% on-time).
+            </p>
+          </div>
 
-        <div className="card">
-          <div className="badge badge-neutral" style={{ marginBottom: 'var(--space-2)' }}>CP Practice Solves</div>
-          <h4 className="card-title">{cpStats.independentlySolved} Independent &bull; {cpStats.assistedSolved} Assisted</h4>
-          <p className="card-description">
-            {cpStats.total} total problems logged. {cpStats.needsReattempt} flagged for reattempt.
-          </p>
+          <div className="card">
+            <div className="badge badge-neutral" style={{ marginBottom: 'var(--space-2)' }}>CP Practice Solves</div>
+            <h4 className="card-title">{cpStats.independentlySolved} Independent &bull; {cpStats.assistedSolved} Assisted</h4>
+            <p className="card-description">
+              {cpStats.total} total problems logged. {cpStats.needsReattempt} flagged for reattempt.
+            </p>
+          </div>
         </div>
       </div>
 
@@ -247,7 +341,7 @@ export const OverviewSection: React.FC = () => {
 
       {/* Weak Topics & Active Doubts Section */}
       <div className="grid-2" style={{ marginBottom: 'var(--space-6)' }}>
-        {/* Weak Topics */}
+        {/* Weak Topics & Flagged Areas */}
         <div className="card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-3)' }}>
             <h4 className="card-title" style={{ margin: 0 }}>Weak Topics (Confidence 1–2)</h4>
@@ -287,14 +381,22 @@ export const OverviewSection: React.FC = () => {
               )}
             </div>
           )}
-          <button
-            type="button"
-            className="btn btn-secondary btn-sm"
-            style={{ marginTop: 'var(--space-3)' }}
-            onClick={() => setActiveSection('syllabus')}
-          >
-            Review in Syllabus Tracker &rarr;
-          </button>
+          <div style={{ display: 'flex', gap: 'var(--space-2)', marginTop: 'var(--space-3)' }}>
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => setActiveSection('syllabus')}
+            >
+              Review in Syllabus &rarr;
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary btn-sm"
+              onClick={() => setActiveSection('analytics')}
+            >
+              Weak-Area Analytics ({weakAreas.length}) &rarr;
+            </button>
+          </div>
         </div>
 
         {/* Unresolved Doubts List */}
@@ -360,18 +462,19 @@ export const OverviewSection: React.FC = () => {
             </p>
           </div>
 
-          <div style={{ borderLeft: '3px solid var(--color-accent)', paddingLeft: 'var(--space-3)' }}>
+          <div style={{ borderLeft: '3px solid var(--color-success-dot)', paddingLeft: 'var(--space-3)' }}>
             <strong>Milestone 3: Daily Study Workflows</strong>
             <p className="card-description" style={{ marginTop: '4px' }}>
               Task management, daily study planner, CP practice problem tracker, instant brain dump &amp; doubt capture.
-              <span className="badge badge-accent" style={{ display: 'inline-block', marginLeft: '6px' }}>Active</span>
+              <span className="badge badge-success" style={{ display: 'inline-block', marginLeft: '6px' }}>Verified</span>
             </p>
           </div>
 
-          <div style={{ borderLeft: '3px solid var(--color-border-strong)', paddingLeft: 'var(--space-3)' }}>
+          <div style={{ borderLeft: '3px solid var(--color-accent)', paddingLeft: 'var(--space-3)' }}>
             <strong>Milestone 4: Revision Intelligence &amp; Recovery</strong>
             <p className="card-description" style={{ marginTop: '4px' }}>
-              Spaced revision scheduling, JSON export/restore workflows, and pre-restore safety backups.
+              Spaced revision scheduling, weak-area analytics, JSON export/restore workflows, and safety backups.
+              <span className="badge badge-accent" style={{ display: 'inline-block', marginLeft: '6px' }}>Active</span>
             </p>
           </div>
         </div>

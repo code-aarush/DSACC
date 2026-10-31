@@ -66,6 +66,7 @@ const MIGRATIONS: Record<number, MigrationFn> = {
       tasks: Array.isArray(rawObj.tasks) ? rawObj.tasks : [],
       brainDumpNotes: Array.isArray(rawObj.brainDumpNotes) ? rawObj.brainDumpNotes : [],
       studySessions: Array.isArray(rawObj.studySessions) ? rawObj.studySessions : [],
+      revisions: [],
       settings: {
         examDate: typeof rawObj.examDate === 'string' ? rawObj.examDate : '2026-11-03',
         examTitle: typeof rawObj.examTitle === 'string' ? rawObj.examTitle : 'DSA End-Semester Examination',
@@ -79,6 +80,44 @@ const MIGRATIONS: Record<number, MigrationFn> = {
 
     return {
       schemaVersion: 1,
+      appVersion: '0.1.0',
+      updatedAt: getCurrentIsoTimestamp(),
+      data: payload,
+    }
+  },
+
+  // Version 1 to Version 2 (Milestone 4): adds revisions store and spaced repetition settings
+  1: (raw: unknown): VersionedApplicationState => {
+    const rawObj = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>
+    const prevEnvelope = rawObj as Partial<VersionedApplicationState>
+    const prevData = (prevEnvelope.data || {}) as Partial<ApplicationDataPayload>
+
+    const payload: ApplicationDataPayload = {
+      topics: Array.isArray(prevData.topics) ? prevData.topics : [],
+      adts: Array.isArray(prevData.adts) ? prevData.adts : [],
+      algorithms: Array.isArray(prevData.algorithms) ? prevData.algorithms : [],
+      cpProblems: Array.isArray(prevData.cpProblems) ? prevData.cpProblems : [],
+      tasks: Array.isArray(prevData.tasks) ? prevData.tasks : [],
+      brainDumpNotes: Array.isArray(prevData.brainDumpNotes) ? prevData.brainDumpNotes : [],
+      studySessions: Array.isArray(prevData.studySessions) ? prevData.studySessions : [],
+      revisions: Array.isArray(prevData.revisions) ? prevData.revisions : [],
+      settings: {
+        examDate: typeof prevData.settings?.examDate === 'string' ? prevData.settings.examDate : '2026-11-03',
+        examTitle: typeof prevData.settings?.examTitle === 'string' ? prevData.settings.examTitle : 'DSA End-Semester Examination',
+        targetDailyStudyMinutes: typeof prevData.settings?.targetDailyStudyMinutes === 'number' ? prevData.settings.targetDailyStudyMinutes : 180,
+        theme: prevData.settings?.theme ?? 'light',
+        spacedRepetitionIntervalsDays: Array.isArray(prevData.settings?.spacedRepetitionIntervalsDays) && prevData.settings.spacedRepetitionIntervalsDays.length > 0
+          ? prevData.settings.spacedRepetitionIntervalsDays
+          : [1, 3, 7, 14, 30],
+        lastExportedAt: prevData.settings?.lastExportedAt,
+        backupReminderDismissedUntil: prevData.settings?.backupReminderDismissedUntil,
+        initialisedAt: prevData.settings?.initialisedAt || getCurrentIsoTimestamp(),
+        academicDataSeededAt: prevData.settings?.academicDataSeededAt || getCurrentIsoTimestamp(),
+      },
+    }
+
+    return {
+      schemaVersion: 2,
       appVersion: '0.1.0',
       updatedAt: getCurrentIsoTimestamp(),
       data: payload,

@@ -6,7 +6,7 @@ import {
   CORRUPTED_BACKUP_KEY,
 } from '../lib/storage/localStorageAdapter'
 import { initializeStorage, createInitialApplicationState } from '../lib/storage/storageService'
-import { VersionedApplicationState } from '../types/domain'
+import { VersionedApplicationState, CURRENT_SCHEMA_VERSION } from '../types/domain'
 
 describe('Persistence and Storage Foundation Tests', () => {
   let adapter: LocalStorageAdapter
@@ -24,7 +24,7 @@ describe('Persistence and Storage Foundation Tests', () => {
     const loadResult = await adapter.load()
     expect(loadResult.success).toBe(true)
     expect(loadResult.data).toBeDefined()
-    expect(loadResult.data?.schemaVersion).toBe(1)
+    expect(loadResult.data?.schemaVersion).toBe(CURRENT_SCHEMA_VERSION)
     expect(loadResult.data?.data.settings.examTitle).toBe('DSA End-Semester Examination')
   })
 

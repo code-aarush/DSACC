@@ -20,6 +20,7 @@ describe('Runtime Validation Tests', () => {
       tasks: [],
       brainDumpNotes: [],
       studySessions: [],
+      revisions: [],
       settings: {
         examDate: '2026-11-03',
         examTitle: 'DSA End-Semester Examination',

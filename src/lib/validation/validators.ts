@@ -14,6 +14,7 @@ import {
   CPProblem,
   Task,
   BrainDumpNote,
+  RevisionRecord,
   ApplicationSettings,
 } from '../../types/domain'
 
@@ -272,6 +273,37 @@ export function validateBrainDumpNote(note: unknown): ValidationResult {
 }
 
 /**
+ * Validates a RevisionRecord.
+ */
+export function validateRevisionRecord(rev: unknown): ValidationResult {
+  const errors: string[] = []
+  if (!rev || typeof rev !== 'object') {
+    return { isValid: false, errors: ['RevisionRecord is not an object'] }
+  }
+  const r = rev as Partial<RevisionRecord>
+  if (!isNonEmptyString(r.id)) errors.push('RevisionRecord missing valid "id"')
+  if (!['TOPIC', 'ADT', 'ALGORITHM', 'CP_PROBLEM'].includes(r.entityType as string)) {
+    errors.push(`RevisionRecord ${r.id} has invalid entityType: ${r.entityType}`)
+  }
+  if (!isNonEmptyString(r.entityId)) {
+    errors.push(`RevisionRecord ${r.id} missing valid "entityId"`)
+  }
+  if (typeof r.currentIntervalDays !== 'number' || r.currentIntervalDays < 1) {
+    errors.push(`RevisionRecord ${r.id} currentIntervalDays must be a positive number`)
+  }
+  if (!isNonEmptyString(r.nextReviewDate)) {
+    errors.push(`RevisionRecord ${r.id} missing valid "nextReviewDate"`)
+  }
+  if (!['NOT_DUE', 'DUE_SOON', 'OVERDUE', 'REVISED'].includes(r.revisionStatus as string)) {
+    errors.push(`RevisionRecord ${r.id} has invalid revisionStatus: ${r.revisionStatus}`)
+  }
+  if (!Array.isArray(r.reviewHistory)) {
+    errors.push(`RevisionRecord ${r.id} reviewHistory must be an array`)
+  }
+  return { isValid: errors.length === 0, errors }
+}
+
+/**
  * Validates the full data payload inside the envelope.
  */
 export function validateDataPayload(payload: unknown): ValidationResult {
@@ -292,6 +324,7 @@ export function validateDataPayload(payload: unknown): ValidationResult {
     'tasks',
     'brainDumpNotes',
     'studySessions',
+    'revisions',
   ]
 
   for (const field of expectedArrays) {
@@ -398,6 +431,22 @@ export function validateDataPayload(payload: unknown): ValidationResult {
           errors.push(`Duplicate BrainDump note ID detected: "${id}"`)
         }
         seenNoteIds.add(id)
+      }
+    }
+  }
+
+  // Validate Revision records if present
+  if (Array.isArray(candidate.revisions)) {
+    const seenRevisionIds = new Set<string>()
+    for (const rev of candidate.revisions) {
+      const rr = validateRevisionRecord(rev)
+      if (!rr.isValid) errors.push(...rr.errors)
+      if (rev && typeof rev === 'object' && 'id' in rev) {
+        const id = (rev as RevisionRecord).id
+        if (seenRevisionIds.has(id)) {
+          errors.push(`Duplicate Revision ID detected: "${id}"`)
+        }
+        seenRevisionIds.add(id)
       }
     }
   }

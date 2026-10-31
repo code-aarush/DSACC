@@ -65,8 +65,8 @@ describe('Connected Overview Dashboard Tests', () => {
     // Next actionable task should display our new task
     expect(screen.getByText('Revise Minimum Spanning Trees')).toBeInTheDocument()
 
-    // Click "Mark Completed" on hero card
-    const markCompleteBtn = screen.getByRole('button', { name: /✓ mark completed/i })
+    // Click "Mark Done" on hero card
+    const markCompleteBtn = screen.getByRole('button', { name: /✓ mark (completed|done)/i })
     fireEvent.click(markCompleteBtn)
 
     await waitFor(() => {
@@ -81,8 +81,8 @@ describe('Connected Overview Dashboard Tests', () => {
       expect(screen.getByText(/Weak Topics \(Confidence 1–2\)/i)).toBeInTheDocument()
     })
 
-    // Click "Review in Syllabus Tracker"
-    const syllabusJumpBtn = screen.getByRole('button', { name: /review in syllabus tracker/i })
+    // Click "Review in Syllabus"
+    const syllabusJumpBtn = screen.getByRole('button', { name: /review in syllabus/i })
     fireEvent.click(syllabusJumpBtn)
 
     await waitFor(() => {

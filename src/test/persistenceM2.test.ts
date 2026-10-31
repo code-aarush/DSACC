@@ -14,7 +14,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { initializeStorage } from '../lib/storage/storageService'
 import { LocalStorageAdapter, PRIMARY_STORAGE_KEY } from '../lib/storage/localStorageAdapter'
 import { migrateState } from '../lib/storage/migrations'
-import { VersionedApplicationState, SyllabusTopic } from '../types/domain'
+import { VersionedApplicationState, SyllabusTopic, CURRENT_SCHEMA_VERSION } from '../types/domain'
 import { StorageError } from '../types/storage'
 
 describe('Milestone 2 Persistence & Migration Tests', () => {
@@ -27,7 +27,7 @@ describe('Milestone 2 Persistence & Migration Tests', () => {
     const { state, error } = await initializeStorage(adapter)
 
     expect(error).toBeUndefined()
-    expect(state.schemaVersion).toBe(1)
+    expect(state.schemaVersion).toBe(CURRENT_SCHEMA_VERSION)
     expect(state.data.topics).toHaveLength(72)
     expect(state.data.adts).toHaveLength(32)
     expect(state.data.algorithms).toHaveLength(29)
@@ -35,7 +35,7 @@ describe('Milestone 2 Persistence & Migration Tests', () => {
     // Stored string should exist in localStorage
     const storedRaw = window.localStorage.getItem(PRIMARY_STORAGE_KEY)
     expect(storedRaw).toBeDefined()
-    expect(JSON.parse(storedRaw!).schemaVersion).toBe(1)
+    expect(JSON.parse(storedRaw!).schemaVersion).toBe(CURRENT_SCHEMA_VERSION)
   })
 
   it('repeated initialisation is idempotent and creates zero duplicate records', async () => {
@@ -204,8 +204,8 @@ describe('Milestone 2 Persistence & Migration Tests', () => {
 
     const result = migrateState(legacyRaw)
     expect(result.migrated).toBe(true)
-    expect(result.toVersion).toBe(1)
-    expect(result.state.schemaVersion).toBe(1)
+    expect(result.toVersion).toBe(CURRENT_SCHEMA_VERSION)
+    expect(result.state.schemaVersion).toBe(CURRENT_SCHEMA_VERSION)
 
     // The user's legacy edit must be preserved
     const migratedTopic = result.state.data.topics.find(t => t.id === 'topic-singly-linked-list')

@@ -276,3 +276,4 @@ export function getBrainDumpStats(notes: BrainDumpNote[]): BrainDumpStatsSummary
     byType,
   }
 }
+

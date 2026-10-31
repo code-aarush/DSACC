@@ -88,7 +88,7 @@ export const AppSidebar: React.FC = () => {
 
       <div className="sidebar-footer">
         <div><strong>DSA Command Centre</strong></div>
-        <div>Milestone 3: Daily Study Workflows</div>
+        <div>Milestone 4: Revision Intelligence &amp; Recovery</div>
         <div>Offline &bull; Single User &bull; v0.1.0</div>
       </div>
     </aside>
