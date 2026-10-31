@@ -99,6 +99,24 @@ The application is organized into 8 synchronized modules accessible via the navi
 3. **Safety Guarantee:** Before executing the replacement, DSACC automatically captures an emergency snapshot of your existing state to `dsacc_pre_restore_safety_backup` in `localStorage`.
 4. If the replacement succeeds or if you ever need to revert an accidental restore, a **Rollback to Emergency Safety Snapshot** card will be displayed in the Backup tab to restore your prior data.
 
+### Migrating Progress from Localhost to Hosted Vercel App
+
+Because DSACC is a local-first application, browser `localStorage` is origin-isolated. Data entered on `http://localhost:5173` does not automatically transfer to the hosted Vercel deployment (`https://...vercel.app`). To carry your local progress to the hosted environment:
+
+1. **Export from Localhost:**
+   - In your local development session (`http://localhost:5173`), navigate to **Revision and Analytics** $\to$ **Backup, Export & Restore**.
+   - Click **Download Backup File (.json)**.
+   - Save the `dsacc-backup-*.json` file to your computer.
+2. **Import to Hosted Vercel App:**
+   - Open your hosted Vercel URL in your browser.
+   - Navigate to **Revision and Analytics** $\to$ **Backup, Export & Restore**.
+   - Under **Import, Merge and Disaster Recovery**, click **Browse...** (or drop) and select your downloaded `dsacc-backup-*.json` file.
+   - Review the candidate record counts in the pre-flight summary card.
+   - Click **Full Restore & Replace (Destructive)** and type `"RESTORE"` into the confirmation prompt (or choose **Merge with Existing Data (Safe)** if you already added notes on the hosted site).
+3. **Verification:**
+   - The application instantly reloads and populates all 72 syllabus topics, 32 ADTs, 29 algorithms, study tasks, CP problems, brain dumps, and revision schedules.
+   - All completion percentages and progress bars reflect your exact local progress.
+
 ---
 
 ## 4. Development & Verification Commands
@@ -107,10 +125,12 @@ The application is organized into 8 synchronized modules accessible via the navi
 | :--- | :--- |
 | `npm run dev` | Launch local Vite development server with HMR |
 | `npm run build` | Typecheck with `tsc -b` and produce production build in `dist/` |
-| `npm test` | Run complete automated test suite across all 19 test files with Vitest |
+| `npm test` | Run complete automated test suite across all 21 test files with Vitest |
 | `npm run test:watch` | Run Vitest in interactive watch mode |
 | `npm run lint` | Run ESLint across TypeScript and React source files |
-| `npm run typecheck` | Run standalone TypeScript typecheck (`tsc -b`) |
+| `npm run typecheck` | Standalone TypeScript typecheck (`tsc -b`) |
+| `npx vercel deploy` | Deploy preview build to Vercel |
+| `npx vercel --prod` | Deploy production release to Vercel |
 
 ---
 

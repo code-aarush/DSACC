@@ -185,12 +185,15 @@ export const TasksSection: React.FC = () => {
 
   // Toggle Task Completion
   // GUARANTEE: Completing a task does NOT automatically complete any linked syllabus topic!
-  const handleToggleTaskStatus = async (taskId: string) => {
+  // REVERSIBLE: Reopening restores task to open lists and recalculates overdue/due today metrics.
+  const handleToggleTaskStatus = async (taskId: string, forceDone?: boolean) => {
     const now = getCurrentIsoTimestamp()
     await updateAppState(prev => {
       const updatedTasks = prev.data.tasks.map(t => {
         if (t.id !== taskId) return t
-        const nextStatus: TaskStatus = t.status === 'DONE' ? 'TO_DO' : 'DONE'
+        const isCurrentlyDone = t.status === 'DONE'
+        const nextDone = typeof forceDone === 'boolean' ? forceDone : !isCurrentlyDone
+        const nextStatus: TaskStatus = nextDone ? 'DONE' : 'TO_DO'
         return {
           ...t,
           status: nextStatus,
@@ -249,14 +252,15 @@ export const TasksSection: React.FC = () => {
   }
 
   // Toggle Subtask
-  const handleToggleSubtask = async (taskId: string, subtaskId: string) => {
+  const handleToggleSubtask = async (taskId: string, subtaskId: string, forceCompleted?: boolean) => {
     const now = getCurrentIsoTimestamp()
     await updateAppState(prev => {
       const updatedTasks = prev.data.tasks.map(t => {
         if (t.id !== taskId) return t
         const updatedSubtasks = t.subtasks.map(st => {
           if (st.id !== subtaskId) return st
-          return { ...st, isCompleted: !st.isCompleted }
+          const nextCompleted = typeof forceCompleted === 'boolean' ? forceCompleted : !st.isCompleted
+          return { ...st, isCompleted: nextCompleted }
         })
         return {
           ...t,
@@ -671,7 +675,7 @@ export const TasksSection: React.FC = () => {
                       type="checkbox"
                       className="checklist-checkbox"
                       checked={isDone}
-                      onChange={() => handleToggleTaskStatus(task.id)}
+                      onChange={e => handleToggleTaskStatus(task.id, e.target.checked)}
                       aria-label={`Mark task "${task.title}" as ${isDone ? 'incomplete' : 'done'}`}
                       style={{ marginTop: '3px' }}
                     />
@@ -751,7 +755,7 @@ export const TasksSection: React.FC = () => {
                               <input
                                 type="checkbox"
                                 checked={st.isCompleted}
-                                onChange={() => handleToggleSubtask(task.id, st.id)}
+                                onChange={e => handleToggleSubtask(task.id, st.id, e.target.checked)}
                                 aria-label={`Subtask: ${st.title}`}
                               />
                               <span>{st.title}</span>

@@ -19,6 +19,7 @@ import {
   calculateNextReview,
   recordReviewEvent,
   rescheduleRevision,
+  revertLastReviewEvent,
   createRevisionRecord,
   getTodayDateString,
 } from '../../lib/revision/scheduler'
@@ -276,6 +277,52 @@ export const RevisionAnalyticsSection: React.FC = () => {
 
     setReschedulingRev(null)
     setRescheduleDate('')
+  }
+
+  // Void / Revert Last Review Event
+  // Reversible: Undoing a review recalculates upcoming/due/overdue status and updates recall analytics.
+  const handleVoidLastReview = async (revId: string) => {
+    const targetRev = revisions.find(r => r.id === revId)
+    if (!targetRev || targetRev.reviewHistory.length === 0) return
+    const confirmed = window.confirm(
+      `Revert the last recorded review for "${getEntityInfo(targetRev).title}"? This will restore the schedule to before that review.`
+    )
+    if (!confirmed) return
+
+    const intervals = settings?.spacedRepetitionIntervalsDays || [1, 3, 7, 14, 30]
+    const updatedRev = revertLastReviewEvent(targetRev, intervals)
+    const now = getCurrentIsoTimestamp()
+
+    await updateAppState(prev => {
+      const nextRevisions = prev.data.revisions.map(r => (r.id === updatedRev.id ? updatedRev : r))
+
+      // If syllabus topic, restore confidence if previous log exists
+      let nextTopics = prev.data.topics
+      if (targetRev.entityType === 'TOPIC') {
+        const lastRemainingLog = updatedRev.reviewHistory[updatedRev.reviewHistory.length - 1]
+        nextTopics = prev.data.topics.map(t => {
+          if (t.id !== targetRev.entityId) return t
+          return {
+            ...t,
+            confidence: lastRemainingLog ? lastRemainingLog.confidenceAfter : t.confidence,
+            lastRevisedAt: lastRemainingLog ? lastRemainingLog.reviewedAt : undefined,
+            nextRevisionDueDate: updatedRev.nextReviewDate,
+            revisionStatus: updatedRev.revisionStatus,
+            updatedAt: now,
+          }
+        })
+      }
+
+      return {
+        ...prev,
+        updatedAt: now,
+        data: {
+          ...prev.data,
+          revisions: nextRevisions,
+          topics: nextTopics,
+        },
+      }
+    })
   }
 
   // Delete Revision Record
@@ -803,6 +850,16 @@ export const RevisionAnalyticsSection: React.FC = () => {
                         >
                           Reschedule
                         </button>
+                        {rev.reviewHistory.length > 0 && (
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => handleVoidLastReview(rev.id)}
+                            title="Revert the last recorded review event"
+                          >
+                            ↩ Void Review
+                          </button>
+                        )}
                         <button
                           type="button"
                           className="btn btn-danger btn-sm"

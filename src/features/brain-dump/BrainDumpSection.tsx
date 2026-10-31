@@ -238,6 +238,16 @@ export const BrainDumpSection: React.FC = () => {
     })
   }
 
+  // Quick Reversible Toggle for Doubt Resolution
+  const handleToggleResolve = async (note: BrainDumpNote, forceVal?: boolean) => {
+    const nextResolved = typeof forceVal === 'boolean' ? forceVal : !note.isResolved
+    if (!nextResolved) {
+      await handleReopenDoubt(note.id)
+    } else {
+      handleOpenResolve(note)
+    }
+  }
+
   // Convert Note/Doubt into a Task
   // GUARANTEE: Preserves original note without deleting it!
   const handleConvertToTask = async (note: BrainDumpNote) => {
@@ -549,7 +559,19 @@ export const BrainDumpSection: React.FC = () => {
                     {note.isPinned && (
                       <span className="badge badge-accent">Pinned</span>
                     )}
-                    {note.isResolved && (
+                    {isDoubt ? (
+                      <label style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: 'var(--font-size-xs)', cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={!!note.isResolved}
+                          onChange={e => handleToggleResolve(note, e.target.checked)}
+                          aria-label={`Doubt resolution status for ${note.title || 'note'}`}
+                        />
+                        <span className={`badge ${note.isResolved ? 'badge-neutral' : 'badge-warning'}`} style={note.isResolved ? { color: 'var(--color-success-text)', borderColor: 'var(--color-success-border)' } : {}}>
+                          {note.isResolved ? 'Resolved' : 'Unresolved'}
+                        </span>
+                      </label>
+                    ) : note.isResolved && (
                       <span className="badge badge-neutral" style={{ color: 'var(--color-success-text)', borderColor: 'var(--color-success-border)' }}>
                         Resolved
                       </span>

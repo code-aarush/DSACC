@@ -73,6 +73,10 @@ export const SyllabusSection: React.FC = () => {
     handleUpdateTopic(topicId, t => ({
       ...t,
       studyStatus: status,
+      completionRequirements: {
+        ...t.completionRequirements,
+        manualConfirmationGranted: status === 'COMPLETED' ? true : false,
+      },
       updatedAt: getCurrentIsoTimestamp(),
     }))
   }
@@ -96,9 +100,9 @@ export const SyllabusSection: React.FC = () => {
   }
 
   // Handle Manual Confirmation toggle
-  const handleManualConfirmationToggle = (topicId: string) => {
+  const handleManualConfirmationToggle = (topicId: string, forced?: boolean) => {
     handleUpdateTopic(topicId, t => {
-      const isGranted = !t.completionRequirements.manualConfirmationGranted
+      const isGranted = typeof forced === 'boolean' ? forced : !t.completionRequirements.manualConfirmationGranted
       const willBeCompleted = isGranted && isTopicRequirementsSatisfied(
         { ...t, completionRequirements: { ...t.completionRequirements, manualConfirmationGranted: isGranted } },
         adts,
@@ -106,7 +110,7 @@ export const SyllabusSection: React.FC = () => {
       )
       return {
         ...t,
-        studyStatus: willBeCompleted ? 'COMPLETED' : t.studyStatus,
+        studyStatus: willBeCompleted ? 'COMPLETED' : (t.studyStatus === 'COMPLETED' ? 'IN_PROGRESS' : t.studyStatus),
         completionRequirements: {
           ...t.completionRequirements,
           manualConfirmationGranted: isGranted,
@@ -503,7 +507,7 @@ export const SyllabusSection: React.FC = () => {
                             <input
                               type="checkbox"
                               checked={!!topic.completionRequirements.manualConfirmationGranted}
-                              onChange={() => handleManualConfirmationToggle(topic.id)}
+                              onChange={e => handleManualConfirmationToggle(topic.id, e.target.checked)}
                             />
                             <span>Manual Completion Confirmed</span>
                           </label>

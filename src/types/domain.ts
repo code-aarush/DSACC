@@ -431,11 +431,15 @@ export interface ADTProgressSummary {
   tested: number
   mastered: number
   percentageTestedOrMastered: number
+  totalOperations: number
+  completedOperations: number
+  percentageOperationsCompleted: number
 }
 
 export interface AlgorithmProgressSummary {
   totalRequired: number
   implementedRequired: number
+  percentageImplemented: number
   correctnessTestedRequired: number
   sampleTraceCompletedRequired: number
   totalOptional: number

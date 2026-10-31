@@ -209,6 +209,32 @@ export const CPPracticeSection: React.FC = () => {
     }))
   }
 
+  // Reversible toggle for Independent Solve
+  const handleToggleIndependentSolve = async (problemId: string, forceVal?: boolean) => {
+    const now = getCurrentIsoTimestamp()
+    await updateAppState(prev => {
+      const updated = prev.data.cpProblems.map(p => {
+        if (p.id !== problemId) return p
+        const nextVal = typeof forceVal === 'boolean' ? forceVal : !p.isIndependentlySolved
+        return {
+          ...p,
+          isIndependentlySolved: nextVal,
+          hintUsed: nextVal ? false : p.hintUsed,
+          solutionViewed: nextVal ? false : p.solutionViewed,
+          updatedAt: now,
+        }
+      })
+      return {
+        ...prev,
+        updatedAt: now,
+        data: {
+          ...prev.data,
+          cpProblems: updated,
+        },
+      }
+    })
+  }
+
   const handleSaveModal = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!modalTitle.trim()) {
@@ -556,7 +582,15 @@ export const CPPracticeSection: React.FC = () => {
                       <div>
                         <strong>Assistance:</strong>
                         <div style={{ fontSize: 'var(--font-size-xs)', marginTop: 'var(--space-1)' }}>
-                          &bull; Independent Solve: <strong>{problem.isIndependentlySolved ? 'Yes' : 'No'}</strong><br />
+                          <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer', margin: '2px 0' }}>
+                            <input
+                              type="checkbox"
+                              checked={!!problem.isIndependentlySolved && !problem.hintUsed && !problem.solutionViewed}
+                              onChange={e => handleToggleIndependentSolve(problem.id, e.target.checked)}
+                            />
+                            <span>Independently Solved: <strong>{problem.isIndependentlySolved ? 'Yes' : 'No'}</strong></span>
+                          </label>
+                          <br />
                           &bull; Hint Used: <strong>{problem.hintUsed ? 'Yes' : 'No'}</strong><br />
                           &bull; Solution Viewed: <strong>{problem.solutionViewed ? 'Yes' : 'No'}</strong>
                         </div>

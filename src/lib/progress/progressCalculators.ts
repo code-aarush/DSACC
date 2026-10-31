@@ -94,6 +94,8 @@ export function calculateADTProgress(adts: ADTImplementation[]): ADTProgressSumm
   let implemented = 0
   let tested = 0
   let mastered = 0
+  let totalOperations = 0
+  let completedOperations = 0
 
   for (const adt of adts) {
     switch (adt.status) {
@@ -113,11 +115,23 @@ export function calculateADTProgress(adts: ADTImplementation[]): ADTProgressSumm
         mastered++
         break
     }
+
+    if (Array.isArray(adt.essentialOperations)) {
+      for (const op of adt.essentialOperations) {
+        totalOperations++
+        if (op.isCompleted) {
+          completedOperations++
+        }
+      }
+    }
   }
 
   const total = adts.length
   const testedOrMastered = tested + mastered
   const percentageTestedOrMastered = total > 0 ? Math.round((testedOrMastered / total) * 100) : 0
+  const percentageOperationsCompleted = totalOperations > 0
+    ? Math.round((completedOperations / totalOperations) * 100)
+    : 0
 
   return {
     total,
@@ -127,6 +141,9 @@ export function calculateADTProgress(adts: ADTImplementation[]): ADTProgressSumm
     tested,
     mastered,
     percentageTestedOrMastered,
+    totalOperations,
+    completedOperations,
+    percentageOperationsCompleted,
   }
 }
 
@@ -162,9 +179,14 @@ export function calculateAlgorithmProgress(algorithms: Algorithm[]): AlgorithmPr
     ? Math.round((correctnessTestedRequired / totalRequired) * 100)
     : 0
 
+  const percentageImplemented = totalRequired > 0
+    ? Math.round((implementedRequired / totalRequired) * 100)
+    : 0
+
   return {
     totalRequired,
     implementedRequired,
+    percentageImplemented,
     correctnessTestedRequired,
     sampleTraceCompletedRequired,
     totalOptional,

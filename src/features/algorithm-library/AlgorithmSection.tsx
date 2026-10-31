@@ -48,28 +48,36 @@ export const AlgorithmSection: React.FC = () => {
     handleUpdateAlgorithm(algoId, al => ({
       ...al,
       status,
+      isCorrectnessTested: status === 'NOT_STARTED' ? false : (status === 'TESTED' || status === 'MASTERED' ? true : al.isCorrectnessTested),
+      isSampleTraceCompleted: status === 'NOT_STARTED' ? false : al.isSampleTraceCompleted,
       updatedAt: getCurrentIsoTimestamp(),
     }))
   }
 
   // Handle Correctness Tested toggle
-  const handleToggleCorrectnessTested = (algoId: string) => {
+  const handleToggleCorrectnessTested = (algoId: string, forced?: boolean) => {
     handleUpdateAlgorithm(algoId, al => {
-      const nextState = !al.isCorrectnessTested
+      const nextState = typeof forced === 'boolean' ? forced : !al.isCorrectnessTested
+      let nextStatus = al.status
+      if (nextState) {
+        if (al.status === 'NOT_STARTED') nextStatus = 'IN_PROGRESS'
+      } else {
+        if (al.status === 'TESTED') nextStatus = 'IMPLEMENTED'
+      }
       return {
         ...al,
         isCorrectnessTested: nextState,
-        status: nextState && al.status === 'NOT_STARTED' ? 'IN_PROGRESS' : al.status,
+        status: nextStatus,
         updatedAt: getCurrentIsoTimestamp(),
       }
     })
   }
 
   // Handle Sample Trace toggle
-  const handleToggleSampleTrace = (algoId: string) => {
+  const handleToggleSampleTrace = (algoId: string, forced?: boolean) => {
     handleUpdateAlgorithm(algoId, al => ({
       ...al,
-      isSampleTraceCompleted: !al.isSampleTraceCompleted,
+      isSampleTraceCompleted: typeof forced === 'boolean' ? forced : !al.isSampleTraceCompleted,
       updatedAt: getCurrentIsoTimestamp(),
     }))
   }
@@ -133,7 +141,7 @@ export const AlgorithmSection: React.FC = () => {
             </span>
           </div>
           <span className="badge badge-accent">
-            Implemented: {progress.implementedRequired} / {progress.totalRequired}
+            Implemented: {progress.implementedRequired} / {progress.totalRequired} ({progress.percentageImplemented}%)
           </span>
         </div>
 
@@ -144,6 +152,22 @@ export const AlgorithmSection: React.FC = () => {
               style={{ width: `${progress.percentageTested}%` }}
               role="progressbar"
               aria-valuenow={progress.percentageTested}
+              aria-valuemin={0}
+              aria-valuemax={100}
+            />
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-1)', fontSize: 'var(--font-size-xs)' }}>
+          <span><strong>Implementation Progress:</strong> {progress.implementedRequired} of {progress.totalRequired} implemented ({progress.percentageImplemented}%)</span>
+        </div>
+        <div className="progress-bar-container" style={{ marginBottom: 'var(--space-3)' }}>
+          <div className="progress-bar-track">
+            <div
+              className={`progress-bar-fill ${progress.percentageImplemented === 100 ? 'success' : ''}`}
+              style={{ width: `${progress.percentageImplemented}%` }}
+              role="progressbar"
+              aria-valuenow={progress.percentageImplemented}
               aria-valuemin={0}
               aria-valuemax={100}
             />
@@ -276,7 +300,7 @@ export const AlgorithmSection: React.FC = () => {
                           <input
                             type="checkbox"
                             checked={algo.isCorrectnessTested}
-                            onChange={() => handleToggleCorrectnessTested(algo.id)}
+                            onChange={e => handleToggleCorrectnessTested(algo.id, e.target.checked)}
                           />
                           <span><strong>Correctness Tested on Sample Inputs</strong></span>
                         </label>
@@ -285,7 +309,7 @@ export const AlgorithmSection: React.FC = () => {
                           <input
                             type="checkbox"
                             checked={algo.isSampleTraceCompleted}
-                            onChange={() => handleToggleSampleTrace(algo.id)}
+                            onChange={e => handleToggleSampleTrace(algo.id, e.target.checked)}
                           />
                           <span>Sample Trace on Paper Completed</span>
                         </label>

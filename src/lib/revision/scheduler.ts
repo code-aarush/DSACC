@@ -266,3 +266,48 @@ export function rescheduleRevision(
     updatedAt: now,
   }
 }
+
+/**
+ * Safely reverts / voids the most recent review event from a revision record.
+ * Restores the previous interval, next review date, and recalculates revisionStatus.
+ */
+export function revertLastReviewEvent(
+  record: RevisionRecord,
+  configuredIntervals: number[] = DEFAULT_INTERVALS,
+  referenceDate: Date = new Date()
+): RevisionRecord {
+  if (!record.reviewHistory || record.reviewHistory.length === 0) {
+    return record
+  }
+
+  const now = getCurrentIsoTimestamp()
+  const updatedHistory = record.reviewHistory.slice(0, -1)
+
+  if (updatedHistory.length === 0) {
+    // Reverted back to initial state
+    const firstInterval = configuredIntervals[0] || 1
+    const nextDate = getTodayDateString(referenceDate)
+    return {
+      ...record,
+      currentIntervalDays: firstInterval,
+      lastReviewedDate: undefined,
+      nextReviewDate: nextDate,
+      revisionStatus: calculateRevisionStatus(nextDate, referenceDate),
+      reviewHistory: [],
+      updatedAt: now,
+    }
+  }
+
+  const prevEntry = updatedHistory[updatedHistory.length - 1]
+  const prevDate = addDaysCalendar(new Date(prevEntry.reviewedAt), prevEntry.intervalDays)
+
+  return {
+    ...record,
+    currentIntervalDays: prevEntry.intervalDays,
+    lastReviewedDate: prevEntry.reviewedAt,
+    nextReviewDate: prevDate,
+    revisionStatus: calculateRevisionStatus(prevDate, referenceDate),
+    reviewHistory: updatedHistory,
+    updatedAt: now,
+  }
+}

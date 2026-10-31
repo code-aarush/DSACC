@@ -63,13 +63,21 @@ export const ADTSection: React.FC = () => {
   }
 
   // Toggle essential operation checklist item
-  const handleToggleOperation = (adtId: string, opId: string) => {
+  const handleToggleOperation = (adtId: string, opId: string, forced?: boolean) => {
     handleUpdateADT(adtId, a => {
       const updatedOps = a.essentialOperations.map(op =>
-        op.id === opId ? { ...op, isCompleted: !op.isCompleted } : op
+        op.id === opId ? { ...op, isCompleted: typeof forced === 'boolean' ? forced : !op.isCompleted } : op
       )
+      const hasAnyCompleted = updatedOps.some(op => op.isCompleted)
+      let nextStatus = a.status
+      if (hasAnyCompleted && a.status === 'NOT_STARTED') {
+        nextStatus = 'IN_PROGRESS'
+      } else if (!hasAnyCompleted && a.status === 'IN_PROGRESS') {
+        nextStatus = 'NOT_STARTED'
+      }
       return {
         ...a,
+        status: nextStatus,
         essentialOperations: updatedOps,
         updatedAt: getCurrentIsoTimestamp(),
       }
@@ -215,6 +223,23 @@ export const ADTSection: React.FC = () => {
           </div>
         </div>
 
+        {/* Overall Operation Checklist Progress */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'var(--space-3)', marginBottom: 'var(--space-1)', fontSize: 'var(--font-size-xs)' }}>
+          <span><strong>Overall Operations Checklist:</strong> {progress.completedOperations} of {progress.totalOperations} operations ({progress.percentageOperationsCompleted}%)</span>
+        </div>
+        <div className="progress-bar-container" style={{ marginBottom: 'var(--space-3)' }}>
+          <div className="progress-bar-track">
+            <div
+              className={`progress-bar-fill ${progress.percentageOperationsCompleted === 100 ? 'success' : ''}`}
+              style={{ width: `${progress.percentageOperationsCompleted}%` }}
+              role="progressbar"
+              aria-valuenow={progress.percentageOperationsCompleted}
+              aria-valuemin={0}
+              aria-valuemax={100}
+            />
+          </div>
+        </div>
+
         {/* Status breakdown pills */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-2)', fontSize: 'var(--font-size-xs)' }}>
           <span className="badge badge-neutral">Not Started: {progress.notStarted}</span>
@@ -299,7 +324,7 @@ export const ADTSection: React.FC = () => {
 
                   <div className="record-meta-area">
                     <span style={{ fontSize: 'var(--font-size-xs)', fontFamily: 'var(--font-family-mono)', color: 'var(--color-text-muted)' }}>
-                      Ops: {completedOpsCount}/{totalOpsCount}
+                      Ops: {completedOpsCount}/{totalOpsCount} ({totalOpsCount > 0 ? Math.round((completedOpsCount / totalOpsCount) * 100) : 0}%)
                     </span>
                     <span className={`badge ${adt.status === 'MASTERED' ? 'badge-neutral' : adt.status === 'TESTED' ? 'badge-accent' : 'badge-neutral'}`}
                           style={{
@@ -398,8 +423,21 @@ export const ADTSection: React.FC = () => {
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <strong style={{ fontSize: 'var(--font-size-sm)' }}>Essential Operation Checklist:</strong>
                         <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-text-muted)' }}>
-                          Checklist does not auto-mark Tested
+                          {completedOpsCount}/{totalOpsCount} ({totalOpsCount > 0 ? Math.round((completedOpsCount / totalOpsCount) * 100) : 0}%) &bull; Checklist does not auto-mark Tested
                         </span>
+                      </div>
+
+                      <div className="progress-bar-container" style={{ margin: 'var(--space-1) 0 var(--space-3)' }}>
+                        <div className="progress-bar-track">
+                          <div
+                            className={`progress-bar-fill ${completedOpsCount === totalOpsCount && totalOpsCount > 0 ? 'success' : ''}`}
+                            style={{ width: `${totalOpsCount > 0 ? Math.round((completedOpsCount / totalOpsCount) * 100) : 0}%` }}
+                            role="progressbar"
+                            aria-valuenow={totalOpsCount > 0 ? Math.round((completedOpsCount / totalOpsCount) * 100) : 0}
+                            aria-valuemin={0}
+                            aria-valuemax={100}
+                          />
+                        </div>
                       </div>
 
                       <div className="checklist">
@@ -409,7 +447,7 @@ export const ADTSection: React.FC = () => {
                               type="checkbox"
                               className="checklist-checkbox"
                               checked={op.isCompleted}
-                              onChange={() => handleToggleOperation(adt.id, op.id)}
+                              onChange={e => handleToggleOperation(adt.id, op.id, e.target.checked)}
                               id={`check-${adt.id}-${op.id}`}
                             />
                             <div className="checklist-content">
