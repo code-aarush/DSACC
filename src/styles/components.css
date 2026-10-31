@@ -14,10 +14,13 @@
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
   color: var(--color-text-secondary);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .countdown-icon {
   color: var(--color-accent);
+  flex-shrink: 0;
 }
 
 .countdown-badge.passed {
@@ -38,11 +41,14 @@
   font-family: var(--font-family-mono);
   background-color: var(--color-bg-elevated);
   border: 1px solid var(--color-border-default);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .save-indicator-dot {
   width: 8px;
   height: 8px;
+  flex-shrink: 0;
   border-radius: 50%;
   display: inline-block;
 }
@@ -153,13 +159,13 @@
 /* Grid Layouts */
 .grid-2 {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
   gap: var(--space-4);
 }
 
 .grid-3 {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr));
   gap: var(--space-4);
 }
 
@@ -172,6 +178,8 @@
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-medium);
   font-family: var(--font-family-mono);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .badge-neutral {
@@ -372,6 +380,8 @@
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
   border-radius: var(--radius-md);
+  white-space: nowrap;
+  flex-shrink: 0;
   transition: all var(--transition-fast);
 }
 
@@ -440,6 +450,7 @@
   gap: var(--space-3);
   cursor: pointer;
   background-color: var(--color-bg-surface);
+  flex-wrap: wrap;
 }
 
 .record-card-header:hover {
@@ -449,20 +460,25 @@
 .record-title-area {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-2);
   flex: 1;
+  min-width: 0;
+  flex-wrap: wrap;
 }
 
 .record-title {
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
+  word-break: break-word;
 }
 
 .record-meta-area {
   display: flex;
   align-items: center;
   gap: var(--space-2);
+  flex-shrink: 0;
+  flex-wrap: wrap;
 }
 
 .record-details {
@@ -664,6 +680,8 @@
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .tab-btn:hover {
@@ -686,6 +704,8 @@
   font-family: var(--font-family-mono);
   background-color: var(--color-bg-elevated);
   color: var(--color-text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .tab-btn.active .tab-badge {
@@ -730,19 +750,23 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-3);
+  flex-wrap: wrap;
 }
 
 .task-title-area {
   display: flex;
   align-items: flex-start;
-  gap: var(--space-3);
+  gap: var(--space-2);
   flex: 1;
+  min-width: 0;
+  flex-wrap: wrap;
 }
 
 .task-title {
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
+  word-break: break-word;
 }
 
 .task-title.done {
@@ -822,5 +846,7 @@
   background-color: var(--color-bg-elevated);
   color: var(--color-text-muted);
   border: 1px solid var(--color-border-default);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 

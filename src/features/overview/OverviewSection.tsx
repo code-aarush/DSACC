@@ -88,7 +88,7 @@ export const OverviewSection: React.FC = () => {
           </div>
           <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center' }}>
             <span className="badge badge-neutral">Storage: {saveStatus}</span>
-            <span className="badge badge-accent">Milestone 4: Revision Intelligence</span>
+            <span className="badge badge-accent">Milestone 5: Production Ready</span>
           </div>
         </div>
       </div>
@@ -470,11 +470,19 @@ export const OverviewSection: React.FC = () => {
             </p>
           </div>
 
-          <div style={{ borderLeft: '3px solid var(--color-accent)', paddingLeft: 'var(--space-3)' }}>
+          <div style={{ borderLeft: '3px solid var(--color-success-dot)', paddingLeft: 'var(--space-3)' }}>
             <strong>Milestone 4: Revision Intelligence &amp; Recovery</strong>
             <p className="card-description" style={{ marginTop: '4px' }}>
               Spaced revision scheduling, weak-area analytics, JSON export/restore workflows, and safety backups.
-              <span className="badge badge-accent" style={{ display: 'inline-block', marginLeft: '6px' }}>Active</span>
+              <span className="badge badge-success" style={{ display: 'inline-block', marginLeft: '6px' }}>Verified</span>
+            </p>
+          </div>
+
+          <div style={{ borderLeft: '3px solid var(--color-success-dot)', paddingLeft: 'var(--space-3)' }}>
+            <strong>Milestone 5: QA, Hardening &amp; Release</strong>
+            <p className="card-description" style={{ marginTop: '4px' }}>
+              Comprehensive regression verification, backup safety audit, responsive hardening, accessibility, and documentation.
+              <span className="badge badge-success" style={{ display: 'inline-block', marginLeft: '6px' }}>Verified</span>
             </p>
           </div>
         </div>

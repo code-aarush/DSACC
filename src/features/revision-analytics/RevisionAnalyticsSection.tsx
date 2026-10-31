@@ -6,6 +6,7 @@ import {
   TopicConfidenceLevel,
   RevisionEntityType,
   SyllabusUnit,
+  VersionedApplicationState,
 } from '../../types/domain'
 import {
   formatDateHuman,
@@ -110,6 +111,7 @@ export const RevisionAnalyticsSection: React.FC = () => {
     () => (settings ? getBackupStatus(settings) : null),
     [settings]
   )
+  const [safetySnapshot, setSafetySnapshot] = useState<VersionedApplicationState | null>(() => loadSafetyBackupSnapshot())
 
   // --------------------------------------------------------------------------
   // Tab 1: Planner States & Handlers
@@ -412,6 +414,7 @@ export const RevisionAnalyticsSection: React.FC = () => {
     setImportResult(null)
 
     if (success) {
+      setSafetySnapshot(loadSafetyBackupSnapshot())
       setBackupNotice('Full restore completed! Live application state replaced from backup.')
     } else {
       setBackupNotice('Restore failed! Rolling back to pre-restore safety snapshot.')
@@ -419,6 +422,27 @@ export const RevisionAnalyticsSection: React.FC = () => {
       if (rollbackState) {
         await updateAppState(() => rollbackState)
       }
+    }
+  }
+
+  // Rollback to Emergency Safety Snapshot
+  const handleRollbackSafetySnapshot = async () => {
+    if (!safetySnapshot) return
+    const confirmed = window.confirm(
+      'Roll back to the pre-restore emergency safety backup snapshot? This will restore your data to how it was before the previous restore.'
+    )
+    if (!confirmed) return
+
+    const now = getCurrentIsoTimestamp()
+    const success = await updateAppState(() => ({
+      ...safetySnapshot,
+      updatedAt: now,
+    }))
+
+    if (success) {
+      setBackupNotice('Emergency rollback complete! State restored from pre-restore safety snapshot.')
+    } else {
+      setBackupNotice('Rollback failed. Storage write could not complete.')
     }
   }
 
@@ -916,7 +940,7 @@ export const RevisionAnalyticsSection: React.FC = () => {
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 'var(--font-size-xs)' }}>
                   <thead>
-                    <tr style={{ borderBottom: '1px solid var(--color-border-default)', textAlign: 'left', color: 'var(--color-text-muted)' }}>
+                    <tr style={{ borderBottom: '1px solid var(--color-border-default)', textAlign: 'left', color: 'var(--color-text-muted)', whiteSpace: 'nowrap' }}>
                       <th style={{ padding: '8px' }}>Date</th>
                       <th style={{ padding: '8px' }}>Entity</th>
                       <th style={{ padding: '8px' }}>Type</th>
@@ -929,19 +953,19 @@ export const RevisionAnalyticsSection: React.FC = () => {
                   <tbody>
                     {analytics.recentHistory.slice(0, 15).map(log => (
                       <tr key={log.id} style={{ borderBottom: '1px solid var(--color-border-default)' }}>
-                        <td style={{ padding: '8px' }}>{formatDateHuman(log.reviewedAt)}</td>
+                        <td style={{ padding: '8px', whiteSpace: 'nowrap' }}>{formatDateHuman(log.reviewedAt)}</td>
                         <td style={{ padding: '8px' }}><strong>{log.entityTitle}</strong></td>
-                        <td style={{ padding: '8px' }}><span className="badge badge-neutral">{log.entityType}</span></td>
-                        <td style={{ padding: '8px' }}>
+                        <td style={{ padding: '8px', whiteSpace: 'nowrap' }}><span className="badge badge-neutral">{log.entityType}</span></td>
+                        <td style={{ padding: '8px', whiteSpace: 'nowrap' }}>
                           <span className={`badge ${log.outcome === 'FAILED' ? 'badge-warning' : log.outcome === 'STRONG' ? 'badge-accent' : 'badge-neutral'}`}>
                             {log.outcome}
                           </span>
                         </td>
-                        <td style={{ padding: '8px' }}>
+                        <td style={{ padding: '8px', whiteSpace: 'nowrap' }}>
                           {log.confidenceBefore ? `${log.confidenceBefore} &rarr; ` : ''}
                           <strong>{log.confidenceAfter}/5</strong>
                         </td>
-                        <td style={{ padding: '8px' }}>{log.intervalDays}d</td>
+                        <td style={{ padding: '8px', whiteSpace: 'nowrap' }}>{log.intervalDays}d</td>
                         <td style={{ padding: '8px', color: 'var(--color-text-muted)' }}>{log.notes || '-'}</td>
                       </tr>
                     ))}
@@ -1065,6 +1089,27 @@ export const RevisionAnalyticsSection: React.FC = () => {
                   <li>Brain Dump Notes: {mergeReport.notesAdded} added, {mergeReport.notesUpdated} updated</li>
                   <li>Revision Schedules: {mergeReport.revisionsAdded} added, {mergeReport.revisionsUpdated} updated</li>
                 </ul>
+              </div>
+            )}
+
+            {/* Safety Snapshot Rollback Option if one exists */}
+            {safetySnapshot && (
+              <div style={{ marginTop: 'var(--space-4)', padding: 'var(--space-3) var(--space-4)', backgroundColor: 'var(--color-bg-elevated)', borderRadius: 'var(--radius-md)', borderLeft: '3px solid var(--color-warning-dot)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
+                  <div>
+                    <strong style={{ fontSize: 'var(--font-size-xs)' }}>Emergency Pre-Restore Snapshot Available</strong>
+                    <p style={{ margin: 0, fontSize: '11px', color: 'var(--color-text-muted)' }}>
+                      Captured on {formatDateHuman(safetySnapshot.updatedAt)}. You can revert the live database to this snapshot if needed.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={handleRollbackSafetySnapshot}
+                  >
+                    &larr; Rollback to Snapshot
+                  </button>
+                </div>
               </div>
             )}
           </div>

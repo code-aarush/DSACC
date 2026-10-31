@@ -24,5 +24,5 @@ export const SECTIONS: NavSectionMeta[] = [
   { id: 'cp-practice', title: 'Competitive Programming Practice', shortTitle: 'CP Practice', milestoneTarget: 'M3' },
   { id: 'tasks', title: 'Tasks and Study Plan', shortTitle: 'Tasks & Plan', milestoneTarget: 'M3' },
   { id: 'brain-dump', title: 'Brain Dump & Doubt Workspace', shortTitle: 'Brain Dump', milestoneTarget: 'M3' },
-  { id: 'analytics', title: 'Revision and Analytics', shortTitle: 'Analytics', milestoneTarget: 'M4' },
+  { id: 'analytics', title: 'Revision and Analytics', shortTitle: 'Analytics', milestoneTarget: 'M4-M5' },
 ]
