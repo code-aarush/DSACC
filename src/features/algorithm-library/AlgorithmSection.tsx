@@ -117,7 +117,7 @@ export const AlgorithmSection: React.FC = () => {
           <div>
             <h2 id="algo-library-title" className="section-title">Algorithm Inventory</h2>
             <p className="section-subtitle">
-              Verified catalog of 31 classic DSA algorithms with asymptotic complexity, preconditions, and correctness testing tracking
+              Verified catalog of 29 classic DSA algorithms with asymptotic complexity, preconditions, and correctness testing tracking
             </p>
           </div>
         </div>

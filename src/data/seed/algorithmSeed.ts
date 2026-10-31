@@ -2,7 +2,7 @@
  * Complete Algorithm Inventory Seed Dataset
  * 
  * Sourced directly from BUILDSPEC.md Section 7 and Section C3.
- * Contains all 31 specified classic algorithms across complexity, searching,
+ * Contains all 29 specified classic algorithms across complexity, searching,
  * sorting, tree algorithms, and graph algorithms.
  * Note: Dijkstra explicitly specifies non-negative edge weight precondition.
  */
@@ -13,27 +13,8 @@ const SEED_TIMESTAMP = '2026-10-29T00:00:00.000Z'
 
 export const SEED_ALGORITHMS: Algorithm[] = [
   // ==========================================================================
-  // Complexity and Recursion (5 Algorithms)
+  // Complexity and Recursion (4 Algorithms)
   // ==========================================================================
-  {
-    id: 'algo-asymptotic-analysis',
-    name: 'Asymptotic Complexity Analysis',
-    category: 'COMPLEXITY_AND_RECURSION',
-    classification: 'REQUIRED',
-    relatedSyllabusTopicIds: ['topic-asymptotic-analysis', 'topic-basic-complexity', 'topic-best-worst-avg'],
-    relatedAdtIds: [],
-    status: 'NOT_STARTED',
-    isCorrectnessTested: false,
-    isSampleTraceCompleted: false,
-    timeComplexity: 'Theoretical',
-    auxiliarySpaceComplexity: 'O(1)',
-    preconditions: 'Well-defined input size N >= 1; monotonic growth functions.',
-    commonMistakesAndNotes: 'Confusing worst-case with Big-Oh upper bound. Big-Oh is an asymptotic bound on a function, not a synonym for worst case.',
-    linkedCpProblemIds: [],
-    linkedTaskIds: [],
-    createdAt: SEED_TIMESTAMP,
-    updatedAt: SEED_TIMESTAMP,
-  },
   {
     id: 'algo-linear-recursion',
     name: 'Linear Recursion Examples',
@@ -588,33 +569,14 @@ export const SEED_ALGORITHMS: Algorithm[] = [
     category: 'GRAPH_ALGORITHMS',
     classification: 'REQUIRED',
     relatedSyllabusTopicIds: ['topic-mst-algorithms', 'topic-greedy-mst'],
-    relatedAdtIds: ['adt-edge-list'],
+    relatedAdtIds: ['adt-edge-list', 'adt-disjoint-set', 'adt-weighted-graph'],
     status: 'NOT_STARTED',
     isCorrectnessTested: false,
     isSampleTraceCompleted: false,
     timeComplexity: 'O(E log E) sorting edges + O(E alpha(V)) union-find',
     auxiliarySpaceComplexity: 'O(V) disjoint set parent array',
     preconditions: 'Connected, undirected weighted graph.',
-    commonMistakesAndNotes: 'Sorts all edges by weight globally, then iterates through edges adding edge if endpoints belong to different disjoint sets (prevents cycles).',
-    linkedCpProblemIds: [],
-    linkedTaskIds: [],
-    createdAt: SEED_TIMESTAMP,
-    updatedAt: SEED_TIMESTAMP,
-  },
-  {
-    id: 'algo-union-find',
-    name: 'Disjoint Set / Union-Find (Kruskal Prerequisite)',
-    category: 'GRAPH_ALGORITHMS',
-    classification: 'REQUIRED',
-    relatedSyllabusTopicIds: ['topic-mst-algorithms'],
-    relatedAdtIds: [],
-    status: 'NOT_STARTED',
-    isCorrectnessTested: false,
-    isSampleTraceCompleted: false,
-    timeComplexity: 'O(alpha(N)) nearly constant amortized time',
-    auxiliarySpaceComplexity: 'O(N) parent and rank arrays',
-    preconditions: 'Fixed set of N elements.',
-    commonMistakesAndNotes: 'Requires both Path Compression during find() and Union by Rank/Size during union() to achieve inverse Ackermann alpha(N) bounds.',
+    commonMistakesAndNotes: 'Sorts all edges by weight globally, then iterates through edges adding edge if endpoints belong to different disjoint sets (using Disjoint Set ADT with path compression and union by rank to prevent cycles).',
     linkedCpProblemIds: [],
     linkedTaskIds: [],
     createdAt: SEED_TIMESTAMP,

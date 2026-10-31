@@ -293,17 +293,33 @@ export function validateDataPayload(payload: unknown): ValidationResult {
 
   // Validate ADTs if present
   if (Array.isArray(candidate.adts)) {
+    const seenAdtIds = new Set<string>()
     for (const adt of candidate.adts) {
       const ar = validateADT(adt)
       if (!ar.isValid) errors.push(...ar.errors)
+      if (adt && typeof adt === 'object' && 'id' in adt) {
+        const id = (adt as ADTImplementation).id
+        if (seenAdtIds.has(id)) {
+          errors.push(`Duplicate ADT ID detected: "${id}"`)
+        }
+        seenAdtIds.add(id)
+      }
     }
   }
 
   // Validate Algorithms if present
   if (Array.isArray(candidate.algorithms)) {
+    const seenAlgoIds = new Set<string>()
     for (const algo of candidate.algorithms) {
       const alr = validateAlgorithm(algo)
       if (!alr.isValid) errors.push(...alr.errors)
+      if (algo && typeof algo === 'object' && 'id' in algo) {
+        const id = (algo as Algorithm).id
+        if (seenAlgoIds.has(id)) {
+          errors.push(`Duplicate algorithm ID detected: "${id}"`)
+        }
+        seenAlgoIds.add(id)
+      }
     }
   }
 

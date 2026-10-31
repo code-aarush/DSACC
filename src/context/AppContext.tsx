@@ -4,7 +4,7 @@
  * Bridges domain models, storage adapter, navigation, and persistence status.
  */
 
-import React, { useEffect, useState, useCallback, useMemo } from 'react'
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { VersionedApplicationState } from '../types/domain'
 import { SaveStatus, StorageError, StorageAdapter } from '../types/storage'
 import { LocalStorageAdapter } from '../lib/storage/localStorageAdapter'
@@ -28,10 +28,16 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, adapter }) =
   const [isInitialized, setIsInitialized] = useState<boolean>(false)
   const [isMobileNavOpen, setIsMobileNavOpen] = useState<boolean>(false)
 
+  const stateRef = useRef<VersionedApplicationState | null>(null)
+  useEffect(() => {
+    stateRef.current = appState
+  }, [appState])
+
   // Initialize storage on mount
   const runInitialization = useCallback(async () => {
     try {
       const initResult = await initializeStorage(storageAdapter)
+      stateRef.current = initResult.state
       setAppState(initResult.state)
       if (initResult.error) {
         setStorageError(initResult.error)
@@ -46,7 +52,9 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, adapter }) =
       const wrappedError = err instanceof StorageError ? err : new StorageError(String(err), 'UNKNOWN', err)
       setStorageError(wrappedError)
       setSaveStatus('ERROR')
-      setAppState(createInitialApplicationState())
+      const fallbackState = createInitialApplicationState()
+      stateRef.current = fallbackState
+      setAppState(fallbackState)
       setIsInitialized(true)
     }
   }, [storageAdapter])
@@ -62,9 +70,11 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, adapter }) =
   // State update and persistence coordinator
   const updateAppState = useCallback(
     async (updater: (prev: VersionedApplicationState) => VersionedApplicationState): Promise<boolean> => {
-      if (!appState) return false
+      const currentState = stateRef.current || appState
+      if (!currentState) return false
 
-      const nextState = updater(appState)
+      const nextState = updater(currentState)
+      stateRef.current = nextState
       setAppState(nextState)
       setSaveStatus('SAVING')
 

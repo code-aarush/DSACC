@@ -13,6 +13,12 @@ import { calculateSyllabusProgress, isTopicRequirementsSatisfied } from '../../l
 import { generateStableId } from '../../lib/ids/idGenerator'
 import { getCurrentIsoTimestamp } from '../../lib/date/dateUtils'
 
+const UNIT_GROUP_HEADINGS: Record<SyllabusUnit, string> = {
+  UNIT_I: 'Unit I: Foundations, Linear Structures and Recursion',
+  UNIT_II: 'Unit II: Trees, Priority Queues, Maps and Skip Lists',
+  UNIT_III: 'Unit III: Search Trees, External Memory and Graphs',
+}
+
 export const SyllabusSection: React.FC = () => {
   const { appState, updateAppState } = useApp()
   const topics = useMemo(() => appState?.data.topics || [], [appState?.data.topics])
@@ -282,7 +288,7 @@ export const SyllabusSection: React.FC = () => {
           <input
             type="search"
             className="search-input"
-            placeholder="Search topics by title, chapter, notes..."
+            placeholder="Search syllabus topics by title, chapter, notes..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             aria-label="Search syllabus topics"
@@ -360,21 +366,44 @@ export const SyllabusSection: React.FC = () => {
             <p className="card-description">No syllabus topics match the selected criteria.</p>
           </div>
         ) : (
-          filteredTopics.map(topic => {
-            const isExpanded = expandedTopicIds.has(topic.id)
-            const isCompleted = topic.studyStatus === 'COMPLETED'
-            const isRequirementsMet = isTopicRequirementsSatisfied(topic, adts, algorithms)
+          (() => {
+            let currentUnit: SyllabusUnit | null = null
+            return filteredTopics.map(topic => {
+              const showUnitHeader = sortBy === 'DEFAULT' && topic.unit !== currentUnit
+              if (showUnitHeader) {
+                currentUnit = topic.unit
+              }
+              const isExpanded = expandedTopicIds.has(topic.id)
+              const isCompleted = topic.studyStatus === 'COMPLETED'
+              const isRequirementsMet = isTopicRequirementsSatisfied(topic, adts, algorithms)
 
-            return (
-              <div key={topic.id} className="record-card">
-                <div
-                  className="record-card-header"
-                  onClick={() => toggleExpand(topic.id)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') toggleExpand(topic.id) }}
-                  aria-expanded={isExpanded}
-                >
+              return (
+                <React.Fragment key={topic.id}>
+                  {showUnitHeader && (
+                    <div className="unit-group-header-wrapper" style={{ margin: 'var(--space-4) 0 var(--space-2)' }}>
+                      <h3
+                        className="unit-group-title"
+                        style={{
+                          fontSize: 'var(--font-size-base)',
+                          fontWeight: 'var(--font-weight-bold)',
+                          color: 'var(--color-text-primary)',
+                          borderBottom: '2px solid var(--color-border-default)',
+                          paddingBottom: '4px',
+                        }}
+                      >
+                        {UNIT_GROUP_HEADINGS[topic.unit]}
+                      </h3>
+                    </div>
+                  )}
+                  <div className="record-card">
+                    <div
+                      className="record-card-header"
+                      onClick={() => toggleExpand(topic.id)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') toggleExpand(topic.id) }}
+                      aria-expanded={isExpanded}
+                    >
                   <div className="record-title-area">
                     <span className="badge badge-neutral">{topic.unit.replace('_', ' ')}</span>
                     <span className={`badge ${topic.classification === 'REQUIRED' ? 'badge-accent' : 'badge-neutral'}`}>
@@ -524,9 +553,11 @@ export const SyllabusSection: React.FC = () => {
                   </div>
                 )}
               </div>
-            )
-          })
-        )}
+            </React.Fragment>
+          )
+        })
+      })()
+    )}
       </div>
 
       {/* Add Custom Topic Modal */}
