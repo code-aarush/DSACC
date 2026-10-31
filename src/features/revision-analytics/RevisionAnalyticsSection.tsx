@@ -402,12 +402,15 @@ export const RevisionAnalyticsSection: React.FC = () => {
     // Step 2: Commit replace
     const incoming = importResult.envelope
     const now = getCurrentIsoTimestamp()
-    const success = await updateAppState(() => ({
-      schemaVersion: incoming.schemaVersion,
-      appVersion: incoming.appVersion,
-      updatedAt: now,
-      data: incoming.data,
-    }))
+    const success = await updateAppState(
+      () => ({
+        schemaVersion: incoming.schemaVersion,
+        appVersion: incoming.appVersion,
+        updatedAt: now,
+        data: incoming.data,
+      }),
+      { force: true }
+    )
 
     setIsReplaceModalOpen(false)
     setReplaceConfirmWord('')
@@ -420,7 +423,7 @@ export const RevisionAnalyticsSection: React.FC = () => {
       setBackupNotice('Restore failed! Rolling back to pre-restore safety snapshot.')
       const rollbackState = loadSafetyBackupSnapshot()
       if (rollbackState) {
-        await updateAppState(() => rollbackState)
+        await updateAppState(() => rollbackState, { force: true })
       }
     }
   }
@@ -434,10 +437,13 @@ export const RevisionAnalyticsSection: React.FC = () => {
     if (!confirmed) return
 
     const now = getCurrentIsoTimestamp()
-    const success = await updateAppState(() => ({
-      ...safetySnapshot,
-      updatedAt: now,
-    }))
+    const success = await updateAppState(
+      () => ({
+        ...safetySnapshot,
+        updatedAt: now,
+      }),
+      { force: true }
+    )
 
     if (success) {
       setBackupNotice('Emergency rollback complete! State restored from pre-restore safety snapshot.')

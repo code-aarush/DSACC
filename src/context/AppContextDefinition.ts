@@ -14,7 +14,10 @@ export interface AppContextValue {
   isMobileNavOpen: boolean
   setIsMobileNavOpen: (open: boolean) => void
   toggleMobileNav: () => void
-  updateAppState: (updater: (prev: VersionedApplicationState) => VersionedApplicationState) => Promise<boolean>
+  updateAppState: (
+    updater: (prev: VersionedApplicationState) => VersionedApplicationState,
+    options?: { force?: boolean }
+  ) => Promise<boolean>
   retryStorageInit: () => Promise<void>
 }
 

@@ -28,6 +28,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, adapter }) =
   const [isInitialized, setIsInitialized] = useState<boolean>(false)
   const [isMobileNavOpen, setIsMobileNavOpen] = useState<boolean>(false)
 
+  const isRecoveryLockedRef = useRef<boolean>(false)
   const stateRef = useRef<VersionedApplicationState | null>(null)
   useEffect(() => {
     stateRef.current = appState
@@ -40,15 +41,18 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, adapter }) =
       stateRef.current = initResult.state
       setAppState(initResult.state)
       if (initResult.error) {
+        isRecoveryLockedRef.current = true
         setStorageError(initResult.error)
         setSaveStatus('ERROR')
       } else {
+        isRecoveryLockedRef.current = false
         setStorageError(null)
         setSaveStatus('SAVED')
         setLastSavedAt(initResult.state.updatedAt)
       }
       setIsInitialized(true)
     } catch (err) {
+      isRecoveryLockedRef.current = true
       const wrappedError = err instanceof StorageError ? err : new StorageError(String(err), 'UNKNOWN', err)
       setStorageError(wrappedError)
       setSaveStatus('ERROR')
@@ -69,21 +73,40 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children, adapter }) =
 
   // State update and persistence coordinator
   const updateAppState = useCallback(
-    async (updater: (prev: VersionedApplicationState) => VersionedApplicationState): Promise<boolean> => {
+    async (
+      updater: (prev: VersionedApplicationState) => VersionedApplicationState,
+      options?: { force?: boolean }
+    ): Promise<boolean> => {
       const currentState = stateRef.current || appState
       if (!currentState) return false
 
       const nextState = updater(currentState)
       stateRef.current = nextState
       setAppState(nextState)
-      setSaveStatus('SAVING')
 
+      // Guard: If startup initialization encountered an unrecovered storage error,
+      // prevent routine saves from overwriting existing storage with initial seed defaults.
+      if (isRecoveryLockedRef.current && !options?.force) {
+        setSaveStatus('ERROR')
+        setStorageError(
+          new StorageError(
+            'Persistence write blocked: Database is in read-only recovery mode due to an unrecovered startup error. Edits are held in memory only to prevent overwriting your existing data. Restore a valid backup or clear storage to resume persistence.',
+            'WRITE_FAILED'
+          )
+        )
+        return false
+      }
+
+      setSaveStatus('SAVING')
       const saveResult = await storageAdapter.save(nextState)
 
       if (saveResult.success) {
         setSaveStatus('SAVED')
         setLastSavedAt(new Date().toISOString())
         setStorageError(null)
+        if (options?.force) {
+          isRecoveryLockedRef.current = false
+        }
         return true
       } else {
         setSaveStatus('ERROR')

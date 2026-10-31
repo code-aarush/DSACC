@@ -126,6 +126,57 @@ const MIGRATIONS: Record<number, MigrationFn> = {
 }
 
 /**
+ * Safely repairs minor structural partial invalidities without discarding user records.
+ */
+export function sanitizePartialApplicationState(raw: unknown): unknown {
+  if (!raw || typeof raw !== 'object') return raw
+  const candidate = raw as Record<string, unknown>
+  if (!candidate.data || typeof candidate.data !== 'object') return raw
+
+  const data = candidate.data as Record<string, unknown>
+  let didModify = false
+  const sanitizedData: Record<string, unknown> = { ...data }
+
+  // Array backfills
+  const arrayKeys = ['topics', 'adts', 'algorithms', 'cpProblems', 'tasks', 'brainDumpNotes', 'studySessions', 'revisions']
+  for (const k of arrayKeys) {
+    if (!Array.isArray(sanitizedData[k])) {
+      sanitizedData[k] = []
+      didModify = true
+    }
+  }
+
+  // Settings defaults
+  if (!sanitizedData.settings || typeof sanitizedData.settings !== 'object') {
+    sanitizedData.settings = {
+      examDate: '2026-11-03',
+      examTitle: 'DSA End-Semester Examination',
+      targetDailyStudyMinutes: 180,
+      theme: 'light',
+      spacedRepetitionIntervalsDays: [1, 3, 7, 14, 30],
+      initialisedAt: getCurrentIsoTimestamp(),
+      academicDataSeededAt: getCurrentIsoTimestamp(),
+    }
+    didModify = true
+  } else {
+    const s = sanitizedData.settings as Record<string, unknown>
+    if (!Array.isArray(s.spacedRepetitionIntervalsDays)) {
+      s.spacedRepetitionIntervalsDays = [1, 3, 7, 14, 30]
+      didModify = true
+    }
+  }
+
+  if (didModify) {
+    return {
+      ...candidate,
+      data: sanitizedData,
+    }
+  }
+
+  return raw
+}
+
+/**
  * Migrates a raw persisted state object to the current schema version.
  */
 export function migrateState(rawState: unknown): MigrationResult {
@@ -136,7 +187,8 @@ export function migrateState(rawState: unknown): MigrationResult {
     )
   }
 
-  const candidate = rawState as Record<string, unknown>
+  const sanitizedState = sanitizePartialApplicationState(rawState)
+  const candidate = sanitizedState as Record<string, unknown>
   const incomingVersion = typeof candidate.schemaVersion === 'number' ? candidate.schemaVersion : 0
 
   if (incomingVersion > CURRENT_SCHEMA_VERSION) {
@@ -148,7 +200,7 @@ export function migrateState(rawState: unknown): MigrationResult {
 
   if (incomingVersion === CURRENT_SCHEMA_VERSION) {
     // Already current - validate directly
-    const validation = validateCompleteApplicationState(rawState)
+    const validation = validateCompleteApplicationState(sanitizedState)
     if (!validation.isValid) {
       throw new StorageError(
         `Current schema v${CURRENT_SCHEMA_VERSION} failed validation: ${validation.errors.join('; ')}`,
@@ -156,15 +208,15 @@ export function migrateState(rawState: unknown): MigrationResult {
       )
     }
     return {
-      migrated: false,
-      state: rawState as VersionedApplicationState,
+      migrated: sanitizedState !== rawState,
+      state: sanitizedState as VersionedApplicationState,
       fromVersion: CURRENT_SCHEMA_VERSION,
       toVersion: CURRENT_SCHEMA_VERSION,
     }
   }
 
   // Sequentially migrate
-  let currentState: unknown = rawState
+  let currentState: unknown = sanitizedState
   let currentVersion = incomingVersion
 
   while (currentVersion < CURRENT_SCHEMA_VERSION) {

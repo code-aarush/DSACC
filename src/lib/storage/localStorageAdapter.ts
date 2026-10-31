@@ -111,6 +111,19 @@ export class LocalStorageAdapter implements StorageAdapter {
         data: migrationResult.state,
       }
     } catch (err: unknown) {
+      // Quarantine invalid, unmigratable, or corrupted data so user edits are not lost
+      try {
+        const raw = window.localStorage.getItem(this.storageKey)
+        if (raw) {
+          window.localStorage.setItem(
+            `${CORRUPTED_BACKUP_KEY}_${Date.now()}`,
+            raw
+          )
+        }
+      } catch {
+        // ignore secondary failure
+      }
+
       if (err instanceof StorageError) {
         return { success: false, error: err }
       }
@@ -150,6 +163,27 @@ export class LocalStorageAdapter implements StorageAdapter {
       }
 
       try {
+        // Safety check: if current data in localStorage cannot be validated,
+        // quarantine it before overwriting so existing progress is never destroyed
+        const currentRaw = window.localStorage.getItem(this.storageKey)
+        if (currentRaw) {
+          try {
+            const parsed = JSON.parse(currentRaw)
+            const check = validateCompleteApplicationState(parsed)
+            if (!check.isValid) {
+              window.localStorage.setItem(
+                `${CORRUPTED_BACKUP_KEY}_presave_${Date.now()}`,
+                currentRaw
+              )
+            }
+          } catch {
+            window.localStorage.setItem(
+              `${CORRUPTED_BACKUP_KEY}_presave_${Date.now()}`,
+              currentRaw
+            )
+          }
+        }
+
         // Stamp update time
         const stateToSave: VersionedApplicationState = {
           ...state,
@@ -162,11 +196,12 @@ export class LocalStorageAdapter implements StorageAdapter {
         return { success: true }
       } catch (err: unknown) {
         // Detect quota exceeded error
+        const errObj = err && typeof err === 'object' ? (err as Record<string, unknown>) : {}
         const isQuota =
-          err instanceof DOMException &&
-          (err.name === 'QuotaExceededError' ||
-            err.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
-            err.code === 22)
+          err instanceof DOMException ||
+          errObj.name === 'QuotaExceededError' ||
+          errObj.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
+          errObj.code === 22
 
         const errorCode = isQuota ? 'QUOTA_EXCEEDED' : 'WRITE_FAILED'
         const message = isQuota
