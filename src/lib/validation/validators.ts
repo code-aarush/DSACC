@@ -32,6 +32,16 @@ export function isValidIsoDate(val: unknown): boolean {
   return !isNaN(time)
 }
 
+export function isValidHttpUrl(candidate: unknown): boolean {
+  if (!candidate || typeof candidate !== 'string') return false
+  try {
+    const url = new URL(candidate.trim())
+    return url.protocol === 'http:' || url.protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
 /**
  * Validates the outer versioned state envelope.
  */
@@ -203,6 +213,18 @@ export function validateCPProblem(cp: unknown): ValidationResult {
   if (typeof c.isIndependentlySolved !== 'boolean') {
     errors.push(`CPProblem ${c.id} missing boolean "isIndependentlySolved"`)
   }
+  if (c.platform && !['LEETCODE', 'HACKERRANK', 'CODECHEF', 'CODEFORCES', 'GFG', 'OTHER'].includes(c.platform as string)) {
+    errors.push(`CPProblem ${c.id} has invalid platform: ${c.platform}`)
+  }
+  if (c.difficulty && !['EASY', 'MEDIUM', 'HARD'].includes(c.difficulty as string)) {
+    errors.push(`CPProblem ${c.id} has invalid difficulty: ${c.difficulty}`)
+  }
+  if (c.status && !['TO_DO', 'ATTEMPTED', 'SOLVED_INDEPENDENTLY', 'SOLVED_WITH_HINTS', 'EDITORIAL_STUDIED', 'NEEDS_REATTEMPT', 'MASTERED'].includes(c.status as string)) {
+    errors.push(`CPProblem ${c.id} has invalid status: ${c.status}`)
+  }
+  if (c.url && typeof c.url === 'string' && c.url.trim().length > 0 && !isValidHttpUrl(c.url)) {
+    errors.push(`CPProblem ${c.id} has invalid URL format: "${c.url}"`)
+  }
   return { isValid: errors.length === 0, errors }
 }
 
@@ -219,6 +241,15 @@ export function validateTask(task: unknown): ValidationResult {
   if (!isNonEmptyString(t.title)) errors.push(`Task ${t.id ?? 'unknown'} missing "title"`)
   if (!['TO_DO', 'IN_PROGRESS', 'BLOCKED', 'DONE'].includes(t.status as string)) {
     errors.push(`Task ${t.id} has invalid status: ${t.status}`)
+  }
+  if (t.category && !['LEARN', 'IMPLEMENT', 'TEST', 'REVISE', 'CP_PRACTICE', 'MOCK_EXAM', 'ADMIN'].includes(t.category as string)) {
+    errors.push(`Task ${t.id} has invalid category: ${t.category}`)
+  }
+  if (t.priority && !['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'].includes(t.priority as string)) {
+    errors.push(`Task ${t.id} has invalid priority: ${t.priority}`)
+  }
+  if (t.subtasks && !Array.isArray(t.subtasks)) {
+    errors.push(`Task ${t.id} subtasks must be an array`)
   }
   return { isValid: errors.length === 0, errors }
 }
@@ -325,25 +356,49 @@ export function validateDataPayload(payload: unknown): ValidationResult {
 
   // Validate CP Problems if present
   if (Array.isArray(candidate.cpProblems)) {
+    const seenCpIds = new Set<string>()
     for (const cp of candidate.cpProblems) {
       const cpr = validateCPProblem(cp)
       if (!cpr.isValid) errors.push(...cpr.errors)
+      if (cp && typeof cp === 'object' && 'id' in cp) {
+        const id = (cp as CPProblem).id
+        if (seenCpIds.has(id)) {
+          errors.push(`Duplicate CP Problem ID detected: "${id}"`)
+        }
+        seenCpIds.add(id)
+      }
     }
   }
 
   // Validate Tasks if present
   if (Array.isArray(candidate.tasks)) {
+    const seenTaskIds = new Set<string>()
     for (const task of candidate.tasks) {
       const tr = validateTask(task)
       if (!tr.isValid) errors.push(...tr.errors)
+      if (task && typeof task === 'object' && 'id' in task) {
+        const id = (task as Task).id
+        if (seenTaskIds.has(id)) {
+          errors.push(`Duplicate Task ID detected: "${id}"`)
+        }
+        seenTaskIds.add(id)
+      }
     }
   }
 
   // Validate BrainDump notes if present
   if (Array.isArray(candidate.brainDumpNotes)) {
+    const seenNoteIds = new Set<string>()
     for (const note of candidate.brainDumpNotes) {
       const nr = validateBrainDumpNote(note)
       if (!nr.isValid) errors.push(...nr.errors)
+      if (note && typeof note === 'object' && 'id' in note) {
+        const id = (note as BrainDumpNote).id
+        if (seenNoteIds.has(id)) {
+          errors.push(`Duplicate BrainDump note ID detected: "${id}"`)
+        }
+        seenNoteIds.add(id)
+      }
     }
   }
 

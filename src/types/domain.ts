@@ -240,6 +240,7 @@ export interface CPProblem extends AuditableEntity {
   keyInsight?: string
   revisitDate?: string
   generalNotes?: string
+  notes?: string
 }
 
 // ============================================================================
@@ -275,10 +276,15 @@ export interface Task extends AuditableEntity {
   estimatedDurationMinutes?: number
   actualDurationMinutes?: number
   subtasks: Subtask[]
+  isDailyFocus?: boolean
   linkedSyllabusTopicId?: EntityId
   linkedAdtId?: EntityId
   linkedAlgorithmId?: EntityId
   linkedCpProblemId?: EntityId
+  linkedSyllabusTopicIds?: EntityId[]
+  linkedAdtIds?: EntityId[]
+  linkedAlgorithmIds?: EntityId[]
+  linkedCpProblemIds?: EntityId[]
   notes?: string
 }
 

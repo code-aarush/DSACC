@@ -8,6 +8,9 @@ import { OverviewSection } from '../../features/overview/OverviewSection'
 import { SyllabusSection } from '../../features/syllabus/SyllabusSection'
 import { ADTSection } from '../../features/adt-library/ADTSection'
 import { AlgorithmSection } from '../../features/algorithm-library/AlgorithmSection'
+import { TasksSection } from '../../features/tasks/TasksSection'
+import { CPPracticeSection } from '../../features/cp-practice/CPPracticeSection'
+import { BrainDumpSection } from '../../features/brain-dump/BrainDumpSection'
 import { PlaceholderSection } from '../common/PlaceholderSection'
 
 export const AppShell: React.FC = () => {
@@ -30,46 +33,13 @@ export const AppShell: React.FC = () => {
         return <AlgorithmSection />
 
       case 'cp-practice':
-        return (
-          <PlaceholderSection
-            section={currentSectionMeta}
-            description="Competitive programming problem log tracking independent vs assisted solves, difficulty, platform URLs, and mistakes."
-            deliverables={[
-              'Problem log supporting LeetCode, HackerRank, CodeChef, and Codeforces',
-              'Strict separation of independent solves vs hint/editorial assisted solves',
-              'Mistakes and key insight note capture',
-              'Revisit date tracking for spaced practice',
-            ]}
-          />
-        )
+        return <CPPracticeSection />
 
       case 'tasks':
-        return (
-          <PlaceholderSection
-            section={currentSectionMeta}
-            description="Daily study planning and prioritized task management with estimate vs actual time tracking and subtasks."
-            deliverables={[
-              'Today, upcoming, and overdue task calculations without broken boundaries',
-              'Task categories: Learn, Implement, Test, Revise, CP Practice, Mock Exam, Admin',
-              'Subtasks and study duration tracking',
-              'Guarantee: Task completion does NOT automatically mark topics complete',
-            ]}
-          />
-        )
+        return <TasksSection />
 
       case 'brain-dump':
-        return (
-          <PlaceholderSection
-            section={currentSectionMeta}
-            description="Quick-capture mental workspace for ideas, unresolved doubts, mistakes, concept explanations, and exam tips."
-            deliverables={[
-              'Instant capture with autosave and clear status feedback',
-              'Doubt resolution workflow preserving resolution history',
-              'Convert doubts into revision tasks without losing original note',
-              'Tagging and pinning support',
-            ]}
-          />
-        )
+        return <BrainDumpSection />
 
       case 'analytics':
         return (

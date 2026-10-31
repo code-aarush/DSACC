@@ -117,12 +117,29 @@ export function calculateExamCountdown(
 }
 
 /**
+ * Safely parses a date string, preserving local calendar date for date-only formats (YYYY-MM-DD).
+ * Prevents UTC timezone conversions from shifting date boundaries across midnight.
+ */
+export function parseDateOnly(dateStr?: string): Date | null {
+  if (!dateStr || typeof dateStr !== 'string') return null
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(dateStr.trim())
+  if (match) {
+    const year = parseInt(match[1], 10)
+    const month = parseInt(match[2], 10) - 1
+    const day = parseInt(match[3], 10)
+    return new Date(year, month, day)
+  }
+  const d = new Date(dateStr)
+  return isNaN(d.getTime()) ? null : d
+}
+
+/**
  * Checks if a task due date is overdue compared to the reference date.
  */
 export function isTaskOverdue(dueDateStr?: string, referenceDate: Date = new Date()): boolean {
   if (!dueDateStr) return false
-  const dueDate = new Date(dueDateStr)
-  if (isNaN(dueDate.getTime())) return false
+  const dueDate = parseDateOnly(dueDateStr)
+  if (!dueDate) return false
 
   const refMidnight = new Date(
     referenceDate.getFullYear(),
@@ -136,6 +153,50 @@ export function isTaskOverdue(dueDateStr?: string, referenceDate: Date = new Dat
   )
 
   return dueMidnight.getTime() < refMidnight.getTime()
+}
+
+/**
+ * Checks if a task due date is today.
+ */
+export function isTaskDueToday(dueDateStr?: string, referenceDate: Date = new Date()): boolean {
+  if (!dueDateStr) return false
+  const dueDate = parseDateOnly(dueDateStr)
+  if (!dueDate) return false
+
+  const refMidnight = new Date(
+    referenceDate.getFullYear(),
+    referenceDate.getMonth(),
+    referenceDate.getDate()
+  )
+  const dueMidnight = new Date(
+    dueDate.getFullYear(),
+    dueDate.getMonth(),
+    dueDate.getDate()
+  )
+
+  return dueMidnight.getTime() === refMidnight.getTime()
+}
+
+/**
+ * Checks if a task due date is strictly upcoming (future).
+ */
+export function isTaskUpcoming(dueDateStr?: string, referenceDate: Date = new Date()): boolean {
+  if (!dueDateStr) return false
+  const dueDate = parseDateOnly(dueDateStr)
+  if (!dueDate) return false
+
+  const refMidnight = new Date(
+    referenceDate.getFullYear(),
+    referenceDate.getMonth(),
+    referenceDate.getDate()
+  )
+  const dueMidnight = new Date(
+    dueDate.getFullYear(),
+    dueDate.getMonth(),
+    dueDate.getDate()
+  )
+
+  return dueMidnight.getTime() > refMidnight.getTime()
 }
 
 /**
