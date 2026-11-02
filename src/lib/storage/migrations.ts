@@ -19,6 +19,7 @@ import { getCurrentIsoTimestamp } from '../date/dateUtils'
 import { SEED_TOPICS } from '../../data/seed/syllabusSeed'
 import { SEED_ADTS } from '../../data/seed/adtSeed'
 import { SEED_ALGORITHMS } from '../../data/seed/algorithmSeed'
+import { isSyllabusTopicExcluded } from '../archive/archiveConstants'
 
 type MigrationFn = (data: unknown) => unknown
 
@@ -123,7 +124,56 @@ const MIGRATIONS: Record<number, MigrationFn> = {
       data: payload,
     }
   },
-}
+
+  // Version 2 to Version 3: Selective Syllabus Archiving
+  2: (raw: unknown): VersionedApplicationState => {
+    const rawObj = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>
+    const prevEnvelope = rawObj as Partial<VersionedApplicationState>
+    const prevData = (prevEnvelope.data || {}) as Partial<ApplicationDataPayload>
+    const now = getCurrentIsoTimestamp()
+
+    const rawTopics = Array.isArray(prevData.topics) ? prevData.topics : []
+    const updatedTopics = rawTopics.map(t => {
+      if (isSyllabusTopicExcluded(t) && t.isArchived === undefined) {
+        return {
+          ...t,
+          isArchived: true,
+          archivedAt: t.archivedAt || now,
+        }
+      }
+      return t
+    })
+
+    const payload: ApplicationDataPayload = {
+      topics: updatedTopics,
+      adts: Array.isArray(prevData.adts) ? prevData.adts : [],
+      algorithms: Array.isArray(prevData.algorithms) ? prevData.algorithms : [],
+      cpProblems: Array.isArray(prevData.cpProblems) ? prevData.cpProblems : [],
+      tasks: Array.isArray(prevData.tasks) ? prevData.tasks : [],
+      brainDumpNotes: Array.isArray(prevData.brainDumpNotes) ? prevData.brainDumpNotes : [],
+      studySessions: Array.isArray(prevData.studySessions) ? prevData.studySessions : [],
+      revisions: Array.isArray(prevData.revisions) ? prevData.revisions : [],
+      settings: prevData.settings
+        ? { ...prevData.settings }
+        : {
+            examDate: '2026-11-03',
+            examTitle: 'DSA End-Semester Examination',
+            targetDailyStudyMinutes: 180,
+            theme: 'light',
+            spacedRepetitionIntervalsDays: [1, 3, 7, 14, 30],
+            initialisedAt: now,
+            academicDataSeededAt: now,
+          },
+    }
+
+    return {
+      schemaVersion: 3,
+      appVersion: '0.1.0',
+      updatedAt: now,
+      data: payload,
+    }
+  },
+};
 
 /**
  * Safely repairs minor structural partial invalidities without discarding user records.

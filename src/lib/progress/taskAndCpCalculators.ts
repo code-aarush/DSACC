@@ -224,7 +224,7 @@ export function getNextActionableTask(tasks: Task[], referenceDate: Date = new D
  */
 export function getWeakTopics(topics: SyllabusTopic[]): SyllabusTopic[] {
   return topics
-    .filter(t => t.confidence === 1 || t.confidence === 2)
+    .filter(t => !t.isArchived && (t.confidence === 1 || t.confidence === 2))
     .sort((a, b) => a.confidence - b.confidence || a.title.localeCompare(b.title))
 }
 

@@ -18,6 +18,10 @@ export interface AuditableEntity {
   readonly createdAt: string
   /** ISO 8601 last update timestamp */
   updatedAt: string
+  /** Whether this entity has been archived from active study workflows */
+  isArchived?: boolean
+  /** ISO 8601 timestamp when this record was archived */
+  archivedAt?: string | null
 }
 
 // ============================================================================
@@ -383,7 +387,7 @@ export interface RevisionRecord extends AuditableEntity {
 // Versioned Application State
 // ============================================================================
 
-export const CURRENT_SCHEMA_VERSION = 2
+export const CURRENT_SCHEMA_VERSION = 3
 
 export interface ApplicationDataPayload {
   topics: SyllabusTopic[]
@@ -421,6 +425,7 @@ export interface SyllabusProgressSummary {
     completedRequired: number
     percentage: number
   }>
+  archivedCount?: number
 }
 
 export interface ADTProgressSummary {

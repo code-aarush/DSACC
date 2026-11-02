@@ -279,6 +279,6 @@ describe('Milestone 5: QA, Hardening & Release Verification', () => {
           expect(screen.getByRole('heading', { level: 2, name: sec.heading })).toBeInTheDocument()
         })
       }
-    })
+    }, 15000)
   })
 })

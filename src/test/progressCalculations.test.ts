@@ -31,18 +31,19 @@ describe('Progress Calculations & Completion Semantics Tests', () => {
     it('accurately calculates required progress from fresh seed data (0% completed)', () => {
       const summary = calculateSyllabusProgress(SEED_TOPICS)
 
-      expect(summary.totalRequired).toBe(70)
+      expect(summary.totalRequired).toBe(62)
       expect(summary.completedRequired).toBe(0)
       expect(summary.percentageRequired).toBe(0)
-      expect(summary.totalOptional).toBe(2)
+      expect(summary.totalOptional).toBe(1)
       expect(summary.completedOptional).toBe(0)
-      expect(summary.notStartedCount).toBe(72)
+      expect(summary.notStartedCount).toBe(63)
+      expect(summary.archivedCount).toBe(9)
     })
 
     it('strictly excludes optional topics from required syllabus percentage', () => {
       // Mark an optional topic as COMPLETED
       const modifiedTopics: SyllabusTopic[] = SEED_TOPICS.map(t =>
-        t.id === 'topic-red-black-tree' // OPTIONAL
+        t.id === 'topic-disjoint-set-adt' // OPTIONAL
           ? { ...t, studyStatus: 'COMPLETED' as const }
           : t
       )
@@ -50,12 +51,12 @@ describe('Progress Calculations & Completion Semantics Tests', () => {
       const summary = calculateSyllabusProgress(modifiedTopics)
 
       // Total required must remain 70, completed required must remain 0
-      expect(summary.totalRequired).toBe(70)
+      expect(summary.totalRequired).toBe(62)
       expect(summary.completedRequired).toBe(0)
       expect(summary.percentageRequired).toBe(0)
 
       // Optional topic must be reflected only in optional count
-      expect(summary.totalOptional).toBe(2)
+      expect(summary.totalOptional).toBe(1)
       expect(summary.completedOptional).toBe(1)
     })
 
@@ -73,7 +74,7 @@ describe('Progress Calculations & Completion Semantics Tests', () => {
       const summary = calculateSyllabusProgress(modifiedTopics)
 
       expect(summary.completedRequired).toBe(16)
-      expect(summary.percentageRequired).toBe(Math.round((16 / 70) * 100)) // 23%
+      expect(summary.percentageRequired).toBe(Math.round((16 / 62) * 100)) // 26%
       expect(summary.byUnit.UNIT_I.completedRequired).toBe(16)
       expect(summary.byUnit.UNIT_I.totalRequired).toBe(32)
       expect(summary.byUnit.UNIT_I.percentage).toBe(50)
@@ -93,6 +94,24 @@ describe('Progress Calculations & Completion Semantics Tests', () => {
   // ==========================================================================
   // Topic Completion Semantics & Circular Dependency Prevention
   // ==========================================================================
+    it('strictly excludes archived topics from required progress denominators and supports restoration', () => {
+      const summary = calculateSyllabusProgress(SEED_TOPICS)
+      expect(summary.archivedCount).toBe(9)
+      expect(summary.totalRequired).toBe(62)
+
+      // Restore an archived required topic
+      const restored = SEED_TOPICS.map(t =>
+        t.id === 'topic-skip-list-struct'
+          ? { ...t, isArchived: false, studyStatus: 'COMPLETED' as const }
+          : t
+      )
+      const restoredSummary = calculateSyllabusProgress(restored)
+      expect(restoredSummary.archivedCount).toBe(8)
+      expect(restoredSummary.totalRequired).toBe(63)
+      expect(restoredSummary.completedRequired).toBe(1)
+      expect(restoredSummary.percentageRequired).toBe(Math.round((1 / 63) * 100))
+    })
+
   describe('Topic Completion Semantics', () => {
     it('guarantees that a topic with no configured requirements does not automatically become complete', () => {
       const topicWithoutReqs: SyllabusTopic = {

@@ -170,6 +170,16 @@ export const SyllabusSection: React.FC = () => {
     setNewTopicDescription('')
   }
 
+  // Handle Archive / Restore toggle
+  const handleToggleArchive = (topicId: string, archive: boolean) => {
+    handleUpdateTopic(topicId, t => ({
+      ...t,
+      isArchived: archive,
+      archivedAt: archive ? getCurrentIsoTimestamp() : null,
+      updatedAt: getCurrentIsoTimestamp(),
+    }))
+  }
+
   // Delete Custom Topic
   const handleDeleteCustomTopic = (topicId: string) => {
     if (window.confirm('Are you sure you want to delete this custom topic?')) {
@@ -417,6 +427,9 @@ export const SyllabusSection: React.FC = () => {
                       {topic.priority}
                     </span>
                     <span className="record-title">{topic.title}</span>
+                    {topic.isArchived && (
+                      <span className="badge badge-warning" style={{ fontSize: '0.7em' }}>Archived</span>
+                    )}
                   </div>
 
                   <div className="record-meta-area">
@@ -426,6 +439,19 @@ export const SyllabusSection: React.FC = () => {
                     <span className={`badge ${isCompleted ? 'badge-neutral' : 'badge-neutral'}`} style={{ backgroundColor: isCompleted ? 'var(--color-success-bg)' : undefined, color: isCompleted ? 'var(--color-success-text)' : undefined }}>
                       {topic.studyStatus.replace('_', ' ')}
                     </span>
+                    {topic.isArchived && (
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-secondary"
+                        style={{ padding: '2px 8px', fontSize: 'var(--font-size-xs)' }}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handleToggleArchive(topic.id, false)
+                        }}
+                      >
+                        Restore
+                      </button>
+                    )}
                     <span style={{ fontSize: 'var(--font-size-xs)' }}>{isExpanded ? '▲' : '▼'}</span>
                   </div>
                 </div>
@@ -542,9 +568,27 @@ export const SyllabusSection: React.FC = () => {
                       />
                     </div>
 
-                    {/* Custom Topic Delete Action */}
-                    {topic.isCustom && (
-                      <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    {/* Archive, Restore and Delete Actions */}
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 'var(--space-2)' }}>
+                      {topic.isArchived ? (
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-secondary"
+                          onClick={() => handleToggleArchive(topic.id, false)}
+                        >
+                          Restore to Active
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="btn btn-sm btn-secondary"
+                          style={{ opacity: 0.8 }}
+                          onClick={() => handleToggleArchive(topic.id, true)}
+                        >
+                          Archive Topic
+                        </button>
+                      )}
+                      {topic.isCustom && (
                         <button
                           type="button"
                           className="btn btn-sm btn-danger"
@@ -552,8 +596,8 @@ export const SyllabusSection: React.FC = () => {
                         >
                           Delete Custom Topic
                         </button>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                 )}
               </div>

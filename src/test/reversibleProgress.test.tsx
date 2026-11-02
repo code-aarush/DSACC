@@ -40,6 +40,7 @@ import {
   Task,
   CPProblem,
   BrainDumpNote,
+  SyllabusTopic,
 } from '../types/domain'
 
 describe('Reversible Progress & Bidirectional Checkbox Suite', () => {
@@ -55,9 +56,9 @@ describe('Reversible Progress & Bidirectional Checkbox Suite', () => {
   // ==========================================================================
   describe('1. Syllabus Progress Reversibility', () => {
     it('increases on check, decreases on uncheck, and supports multiple cycles', () => {
-      const state = createInitialApplicationState()
-      const requiredTopics = state.data.topics.filter(t => t.classification === 'REQUIRED')
-      const targetTopic = requiredTopics[0]
+      const state = JSON.parse(JSON.stringify(createInitialApplicationState()))
+      const activeRequiredTopics = state.data.topics.filter((t: SyllabusTopic) => t.classification === 'REQUIRED' && !t.isArchived)
+      const targetTopic = activeRequiredTopics[0]
 
       const initialProgress = calculateSyllabusProgress(state.data.topics)
       expect(initialProgress.completedRequired).toBe(0)
@@ -93,23 +94,23 @@ describe('Reversible Progress & Bidirectional Checkbox Suite', () => {
 
     it('completing every required item produces 100%, and unchecking all returns to 0%', () => {
       const state = createInitialApplicationState()
-      const requiredTopics = state.data.topics.filter(t => t.classification === 'REQUIRED')
+      const activeRequiredTopics = state.data.topics.filter(t => t.classification === 'REQUIRED' && !t.isArchived)
 
       // Mark all required topics as COMPLETED
-      for (const t of requiredTopics) {
+      for (const t of activeRequiredTopics) {
         t.studyStatus = 'COMPLETED'
         t.completionRequirements.manualConfirmationGranted = true
       }
 
       const allCompleted = calculateSyllabusProgress(state.data.topics)
-      expect(allCompleted.completedRequired).toBe(requiredTopics.length)
+      expect(allCompleted.completedRequired).toBe(activeRequiredTopics.length)
       expect(allCompleted.percentageRequired).toBe(100)
       expect(allCompleted.byUnit.UNIT_I.percentage).toBe(100)
       expect(allCompleted.byUnit.UNIT_II.percentage).toBe(100)
       expect(allCompleted.byUnit.UNIT_III.percentage).toBe(100)
 
       // Revert all to IN_PROGRESS
-      for (const t of requiredTopics) {
+      for (const t of activeRequiredTopics) {
         t.studyStatus = 'IN_PROGRESS'
         t.completionRequirements.manualConfirmationGranted = false
       }

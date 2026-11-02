@@ -80,7 +80,7 @@ describe('Task Manager & Study Plan Tests', () => {
 
     // Syllabus progress should still be 0% complete
     expect(screen.getByText(/Required Syllabus Coverage: 0%/i)).toBeInTheDocument()
-    expect(screen.getByText(/0 of 70 required topics/i)).toBeInTheDocument()
+    expect(screen.getByText(/0 of 62 required topics/i)).toBeInTheDocument()
   })
 
   it('creates a detailed task with subtasks, due date, and linked academic topic', async () => {

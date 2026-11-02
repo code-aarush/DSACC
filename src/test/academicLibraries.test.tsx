@@ -33,7 +33,7 @@ describe('Academic Libraries Integration & Interaction Tests', () => {
 
       // Progress cards should display 0% complete initially
       expect(screen.getByText(/Required Syllabus Coverage: 0%/i)).toBeInTheDocument()
-      expect(screen.getByText(/0 of 70 required topics/i)).toBeInTheDocument()
+      expect(screen.getByText(/0 of 62 required topics/i)).toBeInTheDocument()
 
       // Unit grouping headings should exist
       expect(screen.getByRole('heading', { level: 3, name: /unit i: foundations/i })).toBeInTheDocument()

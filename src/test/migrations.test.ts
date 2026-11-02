@@ -124,14 +124,100 @@ describe('Schema Migration Pipeline Tests', () => {
 
     expect(result.migrated).toBe(true)
     expect(result.fromVersion).toBe(1)
-    expect(result.toVersion).toBe(2)
-    expect(result.state.schemaVersion).toBe(2)
+    expect(result.toVersion).toBe(CURRENT_SCHEMA_VERSION)
+    expect(result.state.schemaVersion).toBe(CURRENT_SCHEMA_VERSION)
     expect(result.state.data.revisions).toEqual([])
     expect(result.state.data.tasks.length).toBe(1)
     expect(result.state.data.tasks[0].id).toBe('task-01')
     expect(result.state.data.cpProblems[0].id).toBe('cp-01')
     expect(result.state.data.brainDumpNotes[0].id).toBe('note-01')
     expect(result.state.data.settings.spacedRepetitionIntervalsDays).toEqual([1, 3, 7, 14])
+  })
+
+  it('migrates v2 schema to v3 schema by archiving selected syllabus topics while preserving user progress', () => {
+    const v2State = {
+      schemaVersion: 2,
+      appVersion: '0.1.0',
+      updatedAt: new Date().toISOString(),
+      data: {
+        topics: [
+          {
+            id: 'topic-skip-list-struct',
+            unit: 'UNIT_II',
+            chapter: 'Skip Lists',
+            title: 'Skip List Structure',
+            description: 'Probabilistic alternative to balanced trees',
+            classification: 'REQUIRED',
+            priority: 'HIGH',
+            studyStatus: 'IN_PROGRESS',
+            confidence: 3,
+            revisionStatus: 'NOT_DUE',
+            completionRequirements: { manualConfirmationRequired: true },
+            linkedTaskIds: ['task-01'],
+            linkedAdtIds: ['adt-skip-list'],
+            linkedAlgorithmIds: [],
+            linkedCpProblemIds: [],
+            notes: 'User customized notes on skip lists',
+            createdAt: '2026-10-01T00:00:00.000Z',
+            updatedAt: '2026-10-05T00:00:00.000Z',
+          },
+          {
+            id: 'topic-dag',
+            unit: 'UNIT_III',
+            chapter: 'Graphs',
+            title: 'Directed Acyclic Graphs',
+            description: 'DAG structural properties',
+            classification: 'REQUIRED',
+            priority: 'HIGH',
+            studyStatus: 'COMPLETED',
+            confidence: 5,
+            revisionStatus: 'NOT_DUE',
+            completionRequirements: { manualConfirmationRequired: true },
+            linkedTaskIds: [],
+            linkedAdtIds: [],
+            linkedAlgorithmIds: [],
+            linkedCpProblemIds: [],
+            notes: 'Preserved topic',
+            createdAt: '2026-10-01T00:00:00.000Z',
+            updatedAt: '2026-10-05T00:00:00.000Z',
+          },
+        ],
+        adts: [],
+        algorithms: [],
+        cpProblems: [],
+        tasks: [],
+        brainDumpNotes: [],
+        studySessions: [],
+        revisions: [],
+        settings: {
+          examDate: '2026-11-03',
+          examTitle: 'DSA End-Semester Examination',
+          targetDailyStudyMinutes: 180,
+          theme: 'light',
+          spacedRepetitionIntervalsDays: [1, 3, 7, 14, 30],
+          initialisedAt: new Date().toISOString(),
+          academicDataSeededAt: new Date().toISOString(),
+        },
+      },
+    }
+
+    const result = migrateState(v2State)
+
+    expect(result.migrated).toBe(true)
+    expect(result.fromVersion).toBe(2)
+    expect(result.toVersion).toBe(3)
+    expect(result.state.schemaVersion).toBe(3)
+
+    const skipListTopic = result.state.data.topics.find(t => t.id === 'topic-skip-list-struct')
+    expect(skipListTopic?.isArchived).toBe(true)
+    expect(skipListTopic?.studyStatus).toBe('IN_PROGRESS') // PRESERVED!
+    expect(skipListTopic?.confidence).toBe(3) // PRESERVED!
+    expect(skipListTopic?.notes).toBe('User customized notes on skip lists') // PRESERVED!
+    expect(skipListTopic?.linkedTaskIds).toEqual(['task-01']) // PRESERVED!
+
+    const dagTopic = result.state.data.topics.find(t => t.id === 'topic-dag')
+    expect(dagTopic?.isArchived).toBeUndefined()
+    expect(dagTopic?.studyStatus).toBe('COMPLETED')
   })
 
   it('throws typed VERSION_MISMATCH if state schema is newer than supported', () => {

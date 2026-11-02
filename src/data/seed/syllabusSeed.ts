@@ -1049,6 +1049,8 @@ export const SEED_TOPICS: SyllabusTopic[] = [
   // ==========================================================================
   {
     id: 'topic-skip-list-struct',
+    isArchived: true,
+    archivedAt: SEED_TIMESTAMP,
     unit: 'UNIT_II',
     chapter: 'Skip Lists',
     title: 'Skip List Structure',
@@ -1070,6 +1072,8 @@ export const SEED_TOPICS: SyllabusTopic[] = [
   },
   {
     id: 'topic-skip-list-impl',
+    isArchived: true,
+    archivedAt: SEED_TIMESTAMP,
     unit: 'UNIT_II',
     chapter: 'Skip Lists',
     title: 'Skip List Implementation',
@@ -1091,6 +1095,8 @@ export const SEED_TOPICS: SyllabusTopic[] = [
   },
   {
     id: 'topic-skip-list-complexity',
+    isArchived: true,
+    archivedAt: SEED_TIMESTAMP,
     unit: 'UNIT_II',
     chapter: 'Skip Lists',
     title: 'Skip List Complexity',
@@ -1200,6 +1206,8 @@ export const SEED_TOPICS: SyllabusTopic[] = [
   },
   {
     id: 'topic-segment-trees',
+    isArchived: true,
+    archivedAt: SEED_TIMESTAMP,
     unit: 'UNIT_III',
     chapter: 'Search Trees',
     title: 'Segment Trees',
@@ -1221,6 +1229,8 @@ export const SEED_TOPICS: SyllabusTopic[] = [
   },
   {
     id: 'topic-segment-tree-impl',
+    isArchived: true,
+    archivedAt: SEED_TIMESTAMP,
     unit: 'UNIT_III',
     chapter: 'Search Trees',
     title: 'Segment Tree Implementation',
@@ -1242,6 +1252,8 @@ export const SEED_TOPICS: SyllabusTopic[] = [
   },
   {
     id: 'topic-b-trees',
+    isArchived: true,
+    archivedAt: SEED_TIMESTAMP,
     unit: 'UNIT_III',
     chapter: 'Search Trees',
     title: 'B-Trees',
@@ -1263,6 +1275,8 @@ export const SEED_TOPICS: SyllabusTopic[] = [
   },
   {
     id: 'topic-b-tree-impl',
+    isArchived: true,
+    archivedAt: SEED_TIMESTAMP,
     unit: 'UNIT_III',
     chapter: 'Search Trees',
     title: 'B-Tree Implementation',
@@ -1397,6 +1411,8 @@ export const SEED_TOPICS: SyllabusTopic[] = [
   },
   {
     id: 'topic-transitive-closure',
+    isArchived: true,
+    archivedAt: SEED_TIMESTAMP,
     unit: 'UNIT_III',
     chapter: 'Graphs',
     title: 'Transitive Closure',
@@ -1527,6 +1543,8 @@ export const SEED_TOPICS: SyllabusTopic[] = [
   // ==========================================================================
   {
     id: 'topic-red-black-tree',
+    isArchived: true,
+    archivedAt: SEED_TIMESTAMP,
     unit: 'UNIT_III',
     chapter: 'Search Trees',
     title: 'Red-Black Trees (Advanced Extension)',

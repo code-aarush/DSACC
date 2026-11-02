@@ -32,7 +32,7 @@ describe('Connected Overview Dashboard Tests', () => {
 
     // Required syllabus coverage
     expect(screen.getByText(/0% Syllabus/i)).toBeInTheDocument()
-    expect(screen.getByText(/0\/70/i)).toBeInTheDocument()
+    expect(screen.getByText(/0\/62/i)).toBeInTheDocument()
 
     // Library summaries
     expect(screen.getByText(/32 ADTs/i)).toBeInTheDocument()
