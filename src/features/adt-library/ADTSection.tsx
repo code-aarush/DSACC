@@ -190,7 +190,7 @@ export const ADTSection: React.FC = () => {
           <div>
             <h2 id="adt-library-title" className="section-title">ADT Implementation Library</h2>
             <p className="section-subtitle">
-              Comprehensive inventory of 32 core Abstract Data Types and representations with operation checklists, complexity notes, and mastery tracking
+              Comprehensive inventory of 29 core Abstract Data Types and representations with operation checklists, complexity notes, and mastery tracking
             </p>
           </div>
         </div>

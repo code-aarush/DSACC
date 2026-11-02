@@ -182,7 +182,7 @@ describe('Task Manager & Study Plan Tests', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { level: 2, name: /adt implementation library/i })).toBeInTheDocument()
-      expect(screen.getByText(/32 core Abstract Data Types/i)).toBeInTheDocument()
+      expect(screen.getByText(/29 core Abstract Data Types/i)).toBeInTheDocument()
     })
   })
 })

@@ -36,13 +36,8 @@ export function calculateSyllabusProgress(topics: SyllabusTopic[]): SyllabusProg
   let completedOptional = 0
   let inProgressCount = 0
   let notStartedCount = 0
-  let archivedCount = 0
 
   for (const topic of topics) {
-    if (topic.isArchived) {
-      archivedCount++
-      continue
-    }
     const isCompleted = topic.studyStatus === 'COMPLETED'
     const isInProgress = topic.studyStatus === 'IN_PROGRESS'
     const isNotStarted = topic.studyStatus === 'NOT_STARTED'
@@ -86,9 +81,7 @@ export function calculateSyllabusProgress(topics: SyllabusTopic[]): SyllabusProg
     completedOptional,
     inProgressCount,
     notStartedCount,
-    byUnit,
-    archivedCount,
-  }
+    byUnit  }
 }
 
 /**

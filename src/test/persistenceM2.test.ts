@@ -28,9 +28,9 @@ describe('Milestone 2 Persistence & Migration Tests', () => {
 
     expect(error).toBeUndefined()
     expect(state.schemaVersion).toBe(CURRENT_SCHEMA_VERSION)
-    expect(state.data.topics).toHaveLength(72)
-    expect(state.data.adts).toHaveLength(32)
-    expect(state.data.algorithms).toHaveLength(29)
+    expect(state.data.topics).toHaveLength(63)
+    expect(state.data.adts).toHaveLength(29)
+    expect(state.data.algorithms).toHaveLength(27)
 
     // Stored string should exist in localStorage
     const storedRaw = window.localStorage.getItem(PRIMARY_STORAGE_KEY)
@@ -43,25 +43,25 @@ describe('Milestone 2 Persistence & Migration Tests', () => {
     
     // First run
     const firstRun = await initializeStorage(adapter)
-    expect(firstRun.state.data.topics).toHaveLength(72)
-    expect(firstRun.state.data.adts).toHaveLength(32)
-    expect(firstRun.state.data.algorithms).toHaveLength(29)
+    expect(firstRun.state.data.topics).toHaveLength(63)
+    expect(firstRun.state.data.adts).toHaveLength(29)
+    expect(firstRun.state.data.algorithms).toHaveLength(27)
 
     // Second run
     const secondRun = await initializeStorage(adapter)
-    expect(secondRun.state.data.topics).toHaveLength(72)
-    expect(secondRun.state.data.adts).toHaveLength(32)
-    expect(secondRun.state.data.algorithms).toHaveLength(29)
+    expect(secondRun.state.data.topics).toHaveLength(63)
+    expect(secondRun.state.data.adts).toHaveLength(29)
+    expect(secondRun.state.data.algorithms).toHaveLength(27)
 
     // Check unique IDs
     const topicIds = new Set(secondRun.state.data.topics.map(t => t.id))
-    expect(topicIds.size).toBe(72)
+    expect(topicIds.size).toBe(63)
 
     const adtIds = new Set(secondRun.state.data.adts.map(a => a.id))
-    expect(adtIds.size).toBe(32)
+    expect(adtIds.size).toBe(29)
 
     const algoIds = new Set(secondRun.state.data.algorithms.map(al => al.id))
-    expect(algoIds.size).toBe(29)
+    expect(algoIds.size).toBe(27)
   })
 
   it('strictly preserves user edits to seeded records during re-initialization', async () => {
@@ -164,7 +164,7 @@ describe('Milestone 2 Persistence & Migration Tests', () => {
     const reinit = await initializeStorage(adapter)
 
     // Custom topic must still exist (total 73 topics)
-    expect(reinit.state.data.topics).toHaveLength(73)
+    expect(reinit.state.data.topics).toHaveLength(64)
     const foundCustom = reinit.state.data.topics.find(t => t.id === 'topic-custom-suffix-automaton')
     expect(foundCustom).toBeDefined()
     expect(foundCustom?.isCustom).toBe(true)
@@ -214,9 +214,9 @@ describe('Milestone 2 Persistence & Migration Tests', () => {
     expect(migratedTopic?.notes).toBe('Legacy user note from previous session')
 
     // Remaining missing seed topics must have been merged
-    expect(result.state.data.topics).toHaveLength(72)
-    expect(result.state.data.adts).toHaveLength(32)
-    expect(result.state.data.algorithms).toHaveLength(29)
+    expect(result.state.data.topics).toHaveLength(63)
+    expect(result.state.data.adts).toHaveLength(29)
+    expect(result.state.data.algorithms).toHaveLength(27)
   })
 
   it('throws a StorageError and does not overwrite with seed data when raw state is malformed', () => {

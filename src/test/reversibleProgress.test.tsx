@@ -57,7 +57,7 @@ describe('Reversible Progress & Bidirectional Checkbox Suite', () => {
   describe('1. Syllabus Progress Reversibility', () => {
     it('increases on check, decreases on uncheck, and supports multiple cycles', () => {
       const state = JSON.parse(JSON.stringify(createInitialApplicationState()))
-      const activeRequiredTopics = state.data.topics.filter((t: SyllabusTopic) => t.classification === 'REQUIRED' && !t.isArchived)
+      const activeRequiredTopics = state.data.topics.filter((t: SyllabusTopic) => t.classification === 'REQUIRED')
       const targetTopic = activeRequiredTopics[0]
 
       const initialProgress = calculateSyllabusProgress(state.data.topics)
@@ -94,7 +94,7 @@ describe('Reversible Progress & Bidirectional Checkbox Suite', () => {
 
     it('completing every required item produces 100%, and unchecking all returns to 0%', () => {
       const state = createInitialApplicationState()
-      const activeRequiredTopics = state.data.topics.filter(t => t.classification === 'REQUIRED' && !t.isArchived)
+      const activeRequiredTopics = state.data.topics.filter(t => t.classification === 'REQUIRED')
 
       // Mark all required topics as COMPLETED
       for (const t of activeRequiredTopics) {

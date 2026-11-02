@@ -49,7 +49,7 @@ describe('Schema Migration Pipeline Tests', () => {
     expect(result.toVersion).toBe(CURRENT_SCHEMA_VERSION)
     expect(result.state.schemaVersion).toBe(CURRENT_SCHEMA_VERSION)
     expect(result.state.data.topics.some(t => t.id === 'topic-legacy-01')).toBe(true)
-    expect(result.state.data.topics.length).toBeGreaterThanOrEqual(72)
+    expect(result.state.data.topics.length).toBeGreaterThanOrEqual(63)
     expect(result.state.data.settings.examTitle).toBe('Legacy Exam Title')
     expect(result.state.data.revisions).toEqual([])
   })
@@ -134,7 +134,7 @@ describe('Schema Migration Pipeline Tests', () => {
     expect(result.state.data.settings.spacedRepetitionIntervalsDays).toEqual([1, 3, 7, 14])
   })
 
-  it('migrates v2 schema to v3 schema by archiving selected syllabus topics while preserving user progress', () => {
+  it('migrates v2 schema to v4 schema by removing selected topics while preserving active user progress', () => {
     const v2State = {
       schemaVersion: 2,
       appVersion: '0.1.0',
@@ -143,43 +143,43 @@ describe('Schema Migration Pipeline Tests', () => {
         topics: [
           {
             id: 'topic-skip-list-struct',
-            unit: 'UNIT_II',
+            unit: 'UNIT_II' as const,
             chapter: 'Skip Lists',
             title: 'Skip List Structure',
-            description: 'Probabilistic alternative to balanced trees',
-            classification: 'REQUIRED',
-            priority: 'HIGH',
-            studyStatus: 'IN_PROGRESS',
-            confidence: 3,
-            revisionStatus: 'NOT_DUE',
+            description: 'Probabilistic hierarchy',
+            classification: 'REQUIRED' as const,
+            priority: 'HIGH' as const,
+            studyStatus: 'IN_PROGRESS' as const,
+            confidence: 3 as const,
+            revisionStatus: 'NOT_DUE' as const,
             completionRequirements: { manualConfirmationRequired: true },
             linkedTaskIds: ['task-01'],
-            linkedAdtIds: ['adt-skip-list'],
+            linkedAdtIds: [],
             linkedAlgorithmIds: [],
             linkedCpProblemIds: [],
             notes: 'User customized notes on skip lists',
-            createdAt: '2026-10-01T00:00:00.000Z',
-            updatedAt: '2026-10-05T00:00:00.000Z',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
           },
           {
             id: 'topic-dag',
-            unit: 'UNIT_III',
+            unit: 'UNIT_III' as const,
             chapter: 'Graphs',
             title: 'Directed Acyclic Graphs',
             description: 'DAG structural properties',
-            classification: 'REQUIRED',
-            priority: 'HIGH',
-            studyStatus: 'COMPLETED',
-            confidence: 5,
-            revisionStatus: 'NOT_DUE',
+            classification: 'REQUIRED' as const,
+            priority: 'HIGH' as const,
+            studyStatus: 'COMPLETED' as const,
+            confidence: 5 as const,
+            revisionStatus: 'NOT_DUE' as const,
             completionRequirements: { manualConfirmationRequired: true },
             linkedTaskIds: [],
             linkedAdtIds: [],
             linkedAlgorithmIds: [],
             linkedCpProblemIds: [],
-            notes: 'Preserved topic',
-            createdAt: '2026-10-01T00:00:00.000Z',
-            updatedAt: '2026-10-05T00:00:00.000Z',
+            notes: '',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
           },
         ],
         adts: [],
@@ -193,7 +193,7 @@ describe('Schema Migration Pipeline Tests', () => {
           examDate: '2026-11-03',
           examTitle: 'DSA End-Semester Examination',
           targetDailyStudyMinutes: 180,
-          theme: 'light',
+          theme: 'light' as const,
           spacedRepetitionIntervalsDays: [1, 3, 7, 14, 30],
           initialisedAt: new Date().toISOString(),
           academicDataSeededAt: new Date().toISOString(),
@@ -205,18 +205,14 @@ describe('Schema Migration Pipeline Tests', () => {
 
     expect(result.migrated).toBe(true)
     expect(result.fromVersion).toBe(2)
-    expect(result.toVersion).toBe(3)
-    expect(result.state.schemaVersion).toBe(3)
+    expect(result.toVersion).toBe(CURRENT_SCHEMA_VERSION)
+    expect(result.state.schemaVersion).toBe(CURRENT_SCHEMA_VERSION)
 
     const skipListTopic = result.state.data.topics.find(t => t.id === 'topic-skip-list-struct')
-    expect(skipListTopic?.isArchived).toBe(true)
-    expect(skipListTopic?.studyStatus).toBe('IN_PROGRESS') // PRESERVED!
-    expect(skipListTopic?.confidence).toBe(3) // PRESERVED!
-    expect(skipListTopic?.notes).toBe('User customized notes on skip lists') // PRESERVED!
-    expect(skipListTopic?.linkedTaskIds).toEqual(['task-01']) // PRESERVED!
+    expect(skipListTopic).toBeUndefined()
 
     const dagTopic = result.state.data.topics.find(t => t.id === 'topic-dag')
-    expect(dagTopic?.isArchived).toBeUndefined()
+    expect(dagTopic).toBeDefined()
     expect(dagTopic?.studyStatus).toBe('COMPLETED')
   })
 

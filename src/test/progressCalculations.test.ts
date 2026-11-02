@@ -37,8 +37,7 @@ describe('Progress Calculations & Completion Semantics Tests', () => {
       expect(summary.totalOptional).toBe(1)
       expect(summary.completedOptional).toBe(0)
       expect(summary.notStartedCount).toBe(63)
-      expect(summary.archivedCount).toBe(9)
-    })
+          })
 
     it('strictly excludes optional topics from required syllabus percentage', () => {
       // Mark an optional topic as COMPLETED
@@ -94,23 +93,6 @@ describe('Progress Calculations & Completion Semantics Tests', () => {
   // ==========================================================================
   // Topic Completion Semantics & Circular Dependency Prevention
   // ==========================================================================
-    it('strictly excludes archived topics from required progress denominators and supports restoration', () => {
-      const summary = calculateSyllabusProgress(SEED_TOPICS)
-      expect(summary.archivedCount).toBe(9)
-      expect(summary.totalRequired).toBe(62)
-
-      // Restore an archived required topic
-      const restored = SEED_TOPICS.map(t =>
-        t.id === 'topic-skip-list-struct'
-          ? { ...t, isArchived: false, studyStatus: 'COMPLETED' as const }
-          : t
-      )
-      const restoredSummary = calculateSyllabusProgress(restored)
-      expect(restoredSummary.archivedCount).toBe(8)
-      expect(restoredSummary.totalRequired).toBe(63)
-      expect(restoredSummary.completedRequired).toBe(1)
-      expect(restoredSummary.percentageRequired).toBe(Math.round((1 / 63) * 100))
-    })
 
   describe('Topic Completion Semantics', () => {
     it('guarantees that a topic with no configured requirements does not automatically become complete', () => {
@@ -199,8 +181,8 @@ describe('Progress Calculations & Completion Semantics Tests', () => {
     it('calculates initial ADT progress accurately (0% tested or mastered)', () => {
       const summary = calculateADTProgress(SEED_ADTS)
 
-      expect(summary.total).toBe(32)
-      expect(summary.notStarted).toBe(32)
+      expect(summary.total).toBe(29)
+      expect(summary.notStarted).toBe(29)
       expect(summary.implemented).toBe(0)
       expect(summary.tested).toBe(0)
       expect(summary.mastered).toBe(0)
@@ -264,7 +246,7 @@ describe('Progress Calculations & Completion Semantics Tests', () => {
     it('calculates initial algorithm progress accurately (0% tested)', () => {
       const summary = calculateAlgorithmProgress(SEED_ALGORITHMS)
 
-      expect(summary.totalRequired).toBe(29)
+      expect(summary.totalRequired).toBe(27)
       expect(summary.implementedRequired).toBe(0)
       expect(summary.correctnessTestedRequired).toBe(0)
       expect(summary.sampleTraceCompletedRequired).toBe(0)

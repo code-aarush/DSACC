@@ -2,7 +2,7 @@
  * Academic Dataset Verification & Manifest Integrity Tests
  * 
  * Verifies:
- * 1. Exact record counts for Syllabus (72), ADTs (32), Algorithms (29).
+ * 1. Exact record counts for Syllabus (63), ADTs (29), Algorithms (27).
  * 2. Uniqueness and stability of all IDs.
  * 3. Explicit Required / Optional classification.
  * 4. Dijkstra non-negative edge weight precondition.
@@ -21,14 +21,14 @@ describe('Academic Dataset Completeness & Manifest Tests', () => {
   // Syllabus Dataset (BUILDSPEC Section 5)
   // ==========================================================================
   describe('Syllabus Seed Dataset', () => {
-    it('contains exactly 72 total syllabus topics (70 required + 2 optional extensions)', () => {
-      expect(SEED_TOPICS.length).toBe(72)
+    it('contains exactly 63 total syllabus topics (62 required + 1 optional extension)', () => {
+      expect(SEED_TOPICS.length).toBe(63)
 
       const requiredTopics = SEED_TOPICS.filter(t => t.classification === 'REQUIRED')
       const optionalTopics = SEED_TOPICS.filter(t => t.classification === 'OPTIONAL')
 
-      expect(requiredTopics.length).toBe(70)
-      expect(optionalTopics.length).toBe(2)
+      expect(requiredTopics.length).toBe(62)
+      expect(optionalTopics.length).toBe(1)
     })
 
     it('covers all three units with exact required topic distributions', () => {
@@ -39,11 +39,11 @@ describe('Academic Dataset Completeness & Manifest Tests', () => {
       // Unit 1: Foundations (13) + Arrays, Linked Lists (8) + Stacks & Queues (11) = 32
       expect(unit1.length).toBe(32)
 
-      // Unit 2: Trees (7) + Priority Queues (4) + Maps & Dictionaries (5) + Skip Lists (3) = 19
-      expect(unit2.length).toBe(19)
+      // Unit 2: Trees (7) + Priority Queues (4) + Maps & Dictionaries (5) = 16
+      expect(unit2.length).toBe(16)
 
-      // Unit 3: Search Trees (8) + External Memory (2) + Graphs (9) = 19
-      expect(unit3.length).toBe(19)
+      // Unit 3: Search Trees (4) + External Memory (2) + Graphs (8) = 14
+      expect(unit3.length).toBe(14)
     })
 
     it('has deterministic, unique topic IDs and valid schema structure for every topic', () => {
@@ -64,11 +64,7 @@ describe('Academic Dataset Completeness & Manifest Tests', () => {
       }
     })
 
-    it('explicitly classifies the 2 extension topics as OPTIONAL', () => {
-      const redBlack = SEED_TOPICS.find(t => t.id === 'topic-red-black-tree')
-      expect(redBlack).toBeDefined()
-      expect(redBlack?.classification).toBe('OPTIONAL')
-
+    it('explicitly classifies the extension topic as OPTIONAL', () => {
       const unionFind = SEED_TOPICS.find(t => t.id === 'topic-disjoint-set-adt')
       expect(unionFind).toBeDefined()
       expect(unionFind?.classification).toBe('OPTIONAL')
@@ -79,8 +75,8 @@ describe('Academic Dataset Completeness & Manifest Tests', () => {
   // ADT Implementation Inventory (BUILDSPEC Section 6)
   // ==========================================================================
   describe('ADT Inventory Dataset', () => {
-    it('contains all 32 specified ADT and representation records', () => {
-      expect(SEED_ADTS.length).toBe(32)
+    it('contains all 29 specified ADT and representation records', () => {
+      expect(SEED_ADTS.length).toBe(29)
     })
 
     it('distributes ADTs across all specified categories', () => {
@@ -94,14 +90,14 @@ describe('Academic Dataset Completeness & Manifest Tests', () => {
       expect(linear.length).toBe(10)
       // Trees & Priority: General Tree, Binary Tree, Traversals, Linked Binary Tree, Array Binary Tree, List PQ, Heap PQ, Min-Heap, Max-Heap, BST, AVL = 11
       expect(treesAndPriority.length).toBe(11)
-      // Maps & Dicts: List-Based Map, Hash Table, Dictionary ADT, Skip List = 4
-      expect(mapsAndDicts.length).toBe(4)
-      // Advanced: Segment Tree, B-Tree = 2
-      expect(advanced.length).toBe(2)
+      // Maps & Dicts: List-Based Map, Hash Table, Dictionary ADT = 3
+      expect(mapsAndDicts.length).toBe(3)
+      // Advanced: 0
+      expect(advanced.length).toBe(0)
       // Graphs: Adjacency List, Adjacency Matrix, Edge List, Weighted Graph, Disjoint Set (DSU) = 5
       expect(graphs.length).toBe(5)
 
-      expect(linear.length + treesAndPriority.length + mapsAndDicts.length + advanced.length + graphs.length).toBe(32)
+      expect(linear.length + treesAndPriority.length + mapsAndDicts.length + advanced.length + graphs.length).toBe(29)
     })
 
     it('has deterministic, unique ADT IDs and valid schema structure for every ADT', () => {
@@ -136,7 +132,7 @@ describe('Academic Dataset Completeness & Manifest Tests', () => {
       }
     })
 
-    it('includes specific critical ADTs: Singly Linked List, BST, AVL, Segment Tree, Disjoint Set', () => {
+    it('includes specific critical ADTs: Singly Linked List, BST, AVL, Disjoint Set', () => {
       const sll = SEED_ADTS.find(a => a.id === 'adt-singly-linked-list')
       expect(sll).toBeDefined()
       expect(sll?.essentialOperations.some(op => op.name.includes('reverse'))).toBe(true)
@@ -149,9 +145,6 @@ describe('Academic Dataset Completeness & Manifest Tests', () => {
       expect(avl).toBeDefined()
       expect(avl?.essentialOperations.some(op => op.name.includes('Rotation'))).toBe(true)
 
-      const segmentTree = SEED_ADTS.find(a => a.id === 'adt-segment-tree')
-      expect(segmentTree).toBeDefined()
-
       const dsu = SEED_ADTS.find(a => a.id === 'adt-disjoint-set')
       expect(dsu).toBeDefined()
       expect(dsu?.essentialOperations.some(op => op.name.includes('find'))).toBe(true)
@@ -163,8 +156,8 @@ describe('Academic Dataset Completeness & Manifest Tests', () => {
   // Algorithm Inventory (BUILDSPEC Section 7)
   // ==========================================================================
   describe('Algorithm Inventory Dataset', () => {
-    it('contains all 29 specified classic algorithm records', () => {
-      expect(SEED_ALGORITHMS.length).toBe(29)
+    it('contains all 27 specified classic algorithm records', () => {
+      expect(SEED_ALGORITHMS.length).toBe(27)
     })
 
     it('distributes algorithms across all five categories', () => {
@@ -178,9 +171,9 @@ describe('Academic Dataset Completeness & Manifest Tests', () => {
       expect(searching.length).toBe(2)
       expect(sorting.length).toBe(7)
       expect(treeAlgos.length).toBe(9)
-      expect(graphAlgos.length).toBe(7)
+      expect(graphAlgos.length).toBe(5)
 
-      expect(recursion.length + searching.length + sorting.length + treeAlgos.length + graphAlgos.length).toBe(29)
+      expect(recursion.length + searching.length + sorting.length + treeAlgos.length + graphAlgos.length).toBe(27)
     })
 
     it('has deterministic, unique algorithm IDs and valid schema structure for every algorithm', () => {

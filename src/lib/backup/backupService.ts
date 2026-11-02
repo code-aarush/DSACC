@@ -23,6 +23,11 @@ import {
   RevisionRecord,
 } from '../../types/domain'
 import { validateDataPayload } from '../validation/validators'
+import {
+  REMOVED_SYLLABUS_SET,
+  REMOVED_ADT_SET,
+  REMOVED_ALGORITHM_SET,
+} from '../catalog/removedRecords'
 import { getCurrentIsoTimestamp, parseDateOnly } from '../date/dateUtils'
 
 export const BACKUP_FORMAT_IDENTIFIER = 'dsacc-backup'
@@ -248,9 +253,10 @@ export function mergeBackupData(
     revisionsUpdated: 0,
   }
 
-  // 1. Merge Topics
-  const topicMap = new Map<string, SyllabusTopic>(current.topics.map(t => [t.id, t]))
+  // 1. Merge Topics (filtering out permanently removed curriculum)
+  const topicMap = new Map<string, SyllabusTopic>(current.topics.filter(t => !REMOVED_SYLLABUS_SET.has(t.id)).map(t => [t.id, t]))
   for (const inTopic of incoming.topics) {
+    if (REMOVED_SYLLABUS_SET.has(inTopic.id)) continue;
     if (!topicMap.has(inTopic.id)) {
       topicMap.set(inTopic.id, inTopic)
       report.topicsAdded++
@@ -263,9 +269,10 @@ export function mergeBackupData(
     }
   }
 
-  // 2. Merge ADTs
-  const adtMap = new Map<string, ADTImplementation>(current.adts.map(a => [a.id, a]))
+  // 2. Merge ADTs (filtering out permanently removed curriculum)
+  const adtMap = new Map<string, ADTImplementation>(current.adts.filter(a => !REMOVED_ADT_SET.has(a.id)).map(a => [a.id, a]))
   for (const inAdt of incoming.adts) {
+    if (REMOVED_ADT_SET.has(inAdt.id)) continue;
     if (!adtMap.has(inAdt.id)) {
       adtMap.set(inAdt.id, inAdt)
     } else {
@@ -276,9 +283,10 @@ export function mergeBackupData(
     }
   }
 
-  // 3. Merge Algorithms
-  const algoMap = new Map<string, Algorithm>(current.algorithms.map(al => [al.id, al]))
+  // 3. Merge Algorithms (filtering out permanently removed curriculum)
+  const algoMap = new Map<string, Algorithm>(current.algorithms.filter(al => !REMOVED_ALGORITHM_SET.has(al.id)).map(al => [al.id, al]))
   for (const inAlgo of incoming.algorithms) {
+    if (REMOVED_ALGORITHM_SET.has(inAlgo.id)) continue;
     if (!algoMap.has(inAlgo.id)) {
       algoMap.set(inAlgo.id, inAlgo)
     } else {

@@ -19,7 +19,11 @@ import { getCurrentIsoTimestamp } from '../date/dateUtils'
 import { SEED_TOPICS } from '../../data/seed/syllabusSeed'
 import { SEED_ADTS } from '../../data/seed/adtSeed'
 import { SEED_ALGORITHMS } from '../../data/seed/algorithmSeed'
-import { isSyllabusTopicExcluded } from '../archive/archiveConstants'
+import {
+  REMOVED_SYLLABUS_SET,
+  REMOVED_ADT_SET,
+  REMOVED_ALGORITHM_SET,
+} from '../catalog/removedRecords'
 
 type MigrationFn = (data: unknown) => unknown
 
@@ -125,7 +129,7 @@ const MIGRATIONS: Record<number, MigrationFn> = {
     }
   },
 
-  // Version 2 to Version 3: Selective Syllabus Archiving
+  // Version 2 to Version 3: Intermediate Selective Syllabus Archiving (for back-compat)
   2: (raw: unknown): VersionedApplicationState => {
     const rawObj = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>
     const prevEnvelope = rawObj as Partial<VersionedApplicationState>
@@ -134,11 +138,11 @@ const MIGRATIONS: Record<number, MigrationFn> = {
 
     const rawTopics = Array.isArray(prevData.topics) ? prevData.topics : []
     const updatedTopics = rawTopics.map(t => {
-      if (isSyllabusTopicExcluded(t) && t.isArchived === undefined) {
+      if (REMOVED_SYLLABUS_SET.has(t.id)) {
         return {
           ...t,
           isArchived: true,
-          archivedAt: t.archivedAt || now,
+          archivedAt: (t as unknown as { archivedAt?: string }).archivedAt || now,
         }
       }
       return t
@@ -173,7 +177,91 @@ const MIGRATIONS: Record<number, MigrationFn> = {
       data: payload,
     }
   },
-};
+
+  // Version 3 to Version 4: Complete Permanent Removal Across All Three Catalogs
+  3: (raw: unknown): VersionedApplicationState => {
+    const rawObj = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>
+    const prevEnvelope = rawObj as Partial<VersionedApplicationState>
+    const prevData = (prevEnvelope.data || {}) as Partial<ApplicationDataPayload>
+    const now = getCurrentIsoTimestamp()
+
+    // 1. Filter out removed syllabus topics and strip any archive metadata
+    const rawTopics = Array.isArray(prevData.topics) ? prevData.topics : []
+    const cleanedTopics: SyllabusTopic[] = rawTopics
+      .filter(t => !REMOVED_SYLLABUS_SET.has(t.id))
+      .map(t => {
+        const copy = { ...t }
+        delete (copy as unknown as { isArchived?: boolean }).isArchived
+        delete (copy as unknown as { archivedAt?: string | null }).archivedAt
+
+        // Clean cross-references in surviving topics
+        if (copy.id === 'topic-ext-searching') {
+          copy.linkedAdtIds = (copy.linkedAdtIds || []).filter(id => !REMOVED_ADT_SET.has(id))
+        }
+        if (copy.id === 'topic-dag') {
+          copy.linkedAlgorithmIds = (copy.linkedAlgorithmIds || []).filter(id => !REMOVED_ALGORITHM_SET.has(id))
+          copy.completionRequirements = { manualConfirmationRequired: true }
+        }
+        return copy
+      })
+
+    // 2. Filter out removed ADTs and clean cross-references
+    const rawAdts = Array.isArray(prevData.adts) ? prevData.adts : []
+    const cleanedAdts: ADTImplementation[] = rawAdts
+      .filter(a => !REMOVED_ADT_SET.has(a.id))
+      .map(a => {
+        const copy = { ...a }
+        if (copy.id === 'adt-adjacency-list') {
+          copy.linkedAlgorithmIds = (copy.linkedAlgorithmIds || []).filter(id => !REMOVED_ALGORITHM_SET.has(id))
+        }
+        if (copy.id === 'adt-adjacency-matrix') {
+          copy.linkedAlgorithmIds = (copy.linkedAlgorithmIds || []).filter(id => !REMOVED_ALGORITHM_SET.has(id))
+          copy.relatedSyllabusTopicIds = (copy.relatedSyllabusTopicIds || []).filter(id => !REMOVED_SYLLABUS_SET.has(id))
+        }
+        return copy
+      })
+
+    // 3. Filter out removed Algorithms and clean cross-references
+    const rawAlgos = Array.isArray(prevData.algorithms) ? prevData.algorithms : []
+    const cleanedAlgos: Algorithm[] = rawAlgos
+      .filter(al => !REMOVED_ALGORITHM_SET.has(al.id))
+      .map(al => {
+        const copy = { ...al }
+        copy.relatedSyllabusTopicIds = (copy.relatedSyllabusTopicIds || []).filter(id => !REMOVED_SYLLABUS_SET.has(id))
+        copy.relatedAdtIds = (copy.relatedAdtIds || []).filter(id => !REMOVED_ADT_SET.has(id))
+        return copy
+      })
+
+    const payload: ApplicationDataPayload = {
+      topics: cleanedTopics,
+      adts: cleanedAdts,
+      algorithms: cleanedAlgos,
+      cpProblems: Array.isArray(prevData.cpProblems) ? prevData.cpProblems : [],
+      tasks: Array.isArray(prevData.tasks) ? prevData.tasks : [],
+      brainDumpNotes: Array.isArray(prevData.brainDumpNotes) ? prevData.brainDumpNotes : [],
+      studySessions: Array.isArray(prevData.studySessions) ? prevData.studySessions : [],
+      revisions: Array.isArray(prevData.revisions) ? prevData.revisions : [],
+      settings: prevData.settings
+        ? { ...prevData.settings }
+        : {
+            examDate: '2026-11-03',
+            examTitle: 'DSA End-Semester Examination',
+            targetDailyStudyMinutes: 180,
+            theme: 'light',
+            spacedRepetitionIntervalsDays: [1, 3, 7, 14, 30],
+            initialisedAt: now,
+            academicDataSeededAt: now,
+          },
+    }
+
+    return {
+      schemaVersion: 4,
+      appVersion: '0.1.0',
+      updatedAt: now,
+      data: payload,
+    }
+  },
+}
 
 /**
  * Safely repairs minor structural partial invalidities without discarding user records.

@@ -150,7 +150,7 @@ describe('Academic Libraries Integration & Interaction Tests', () => {
   // ADT Implementation Library Workflows
   // ==========================================================================
   describe('ADT Library UI Workflows', () => {
-    it('renders ADT library with 32 ADTs and progress metrics', async () => {
+    it('renders ADT library with 29 ADTs and progress metrics', async () => {
       render(<App />)
       const adtNav = screen.getAllByRole('button', { name: /adt implementation library/i })
       fireEvent.click(adtNav[0])
@@ -159,8 +159,8 @@ describe('Academic Libraries Integration & Interaction Tests', () => {
         expect(screen.getByRole('heading', { level: 2, name: /adt implementation library/i })).toBeInTheDocument()
       })
 
-      expect(screen.getByText(/32 core abstract data types/i)).toBeInTheDocument()
-      expect(screen.getByText(/0 of 32 adts tested or mastered/i)).toBeInTheDocument()
+      expect(screen.getByText(/29 core abstract data types/i)).toBeInTheDocument()
+      expect(screen.getByText(/0 of 29 adts tested or mastered/i)).toBeInTheDocument()
     })
 
     it('filters ADTs by category tabs and search query', async () => {
@@ -253,7 +253,7 @@ describe('Academic Libraries Integration & Interaction Tests', () => {
   // Algorithm Inventory Workflows
   // ==========================================================================
   describe('Algorithm Inventory UI Workflows', () => {
-    it('renders 29 algorithms and displays Dijkstra non-negative precondition', async () => {
+    it('renders 27 algorithms and displays Dijkstra non-negative precondition', async () => {
       render(<App />)
       const algoNav = screen.getAllByRole('button', { name: /algorithm inventory/i })
       fireEvent.click(algoNav[0])
@@ -262,7 +262,7 @@ describe('Academic Libraries Integration & Interaction Tests', () => {
         expect(screen.getByRole('heading', { level: 2, name: /algorithm inventory/i })).toBeInTheDocument()
       })
 
-      expect(screen.getByText(/29 classic dsa algorithms/i)).toBeInTheDocument()
+      expect(screen.getByText(/27 classic dsa algorithms/i)).toBeInTheDocument()
 
       // Search for Dijkstra
       const searchInput = screen.getByPlaceholderText(/search algorithms by name/i)

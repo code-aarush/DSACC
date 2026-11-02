@@ -39,9 +39,9 @@ describe('Data Backup, Export, Import, Merge and Restore Engine', () => {
       expect(envelope.format).toBe(BACKUP_FORMAT_IDENTIFIER)
       expect(envelope.backupVersion).toBe(1)
       expect(envelope.schemaVersion).toBe(sampleState.schemaVersion)
-      expect(envelope.data.topics).toHaveLength(72)
-      expect(envelope.data.adts).toHaveLength(32)
-      expect(envelope.data.algorithms).toHaveLength(29)
+      expect(envelope.data.topics).toHaveLength(63)
+      expect(envelope.data.adts).toHaveLength(29)
+      expect(envelope.data.algorithms).toHaveLength(27)
       expect(Array.isArray(envelope.data.tasks)).toBe(true)
       expect(Array.isArray(envelope.data.cpProblems)).toBe(true)
       expect(Array.isArray(envelope.data.brainDumpNotes)).toBe(true)
@@ -64,7 +64,7 @@ describe('Data Backup, Export, Import, Merge and Restore Engine', () => {
       const result = validateBackupFile(jsonStr, sampleState)
       expect(result.isValid).toBe(true)
       expect(result.errors).toHaveLength(0)
-      expect(result.preview?.topicCount).toBe(72)
+      expect(result.preview?.topicCount).toBe(63)
     })
 
     it('rejects malformed non-JSON strings', () => {
@@ -290,7 +290,7 @@ describe('Data Backup, Export, Import, Merge and Restore Engine', () => {
 
       const retrieved = loadSafetyBackupSnapshot()
       expect(retrieved).not.toBeNull()
-      expect(retrieved?.data.topics).toHaveLength(72)
+      expect(retrieved?.data.topics).toHaveLength(63)
     })
   })
 
